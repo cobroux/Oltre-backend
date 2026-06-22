@@ -1,13 +1,28 @@
-name: CI Pipeline
+name: CI MySQL Spring Boot
 
 on:
   push:
-    branches: [ "main", "develop" ]
   pull_request:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: oltre
+          MYSQL_USER: oltre
+          MYSQL_PASSWORD: oltre
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     steps:
       - name: Checkout code
@@ -19,14 +34,15 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Cache Maven
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+      - name: Wait for MySQL
+        run: sleep 20
 
       - name: Run tests
         run: mvn test
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/oltre
+          SPRING_DATASOURCE_USERNAME: oltre
+          SPRING_DATASOURCE_PASSWORD: oltre
 
-      - name: Build project
+      - name: Build
         run: mvn clean package -DskipTests
