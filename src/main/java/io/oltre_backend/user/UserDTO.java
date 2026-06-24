@@ -4,22 +4,22 @@ import java.time.LocalDate;
 
 public class UserDTO{
 
-    private String name;
+    private String username;
     private LocalDate birthDate;
     private Integer age;
 
-    public UserDTO (String name, LocalDate birthDate, Integer age){
-        this.name =name;
+    public UserDTO (String username, LocalDate birthDate, Integer age){
+        this.username = username;
         this.birthDate = birthDate;
         this.age = age;
     }
 
-    public String getName() {
-        return name;
+    public String getUsername() {
+        return username;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setName(String username) {
+        this.username = username;
     }
 
     public LocalDate getBirthDate() {

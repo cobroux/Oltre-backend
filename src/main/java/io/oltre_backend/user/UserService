@@ -1,7 +1,5 @@
 package io.oltre_backend.user;
 
-import java.util.Optional;
-
 import org.springframework.stereotype.Service;
 
 @Service
@@ -9,12 +7,18 @@ public class UserService {
     
     public final UserRepository userRepository;
 
+    private UserDTO toDto(User user) {
+            UserDTO dto = new UserDTO(user.getUsername(), user.getBirthDate(), user.getAge());
+            return dto;
+        }
+
     UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    public Optional<User> getUser(final Long id){
-        return userRepository.findById(id);
+    public UserDTO getUserById(Long id) {
+        User user = userRepository.findById(id).orElseThrow();
+        return toDto(user);
     }
 
     public Iterable<User> getUsers(){
