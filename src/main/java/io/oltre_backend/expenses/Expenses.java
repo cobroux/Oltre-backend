@@ -2,27 +2,42 @@ package io.oltre_backend.expenses;
 
 import java.time.LocalDate;
 
+import io.oltre_backend.user.User;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
     @Entity
+    @Table(name= "expenses")
     public class Expenses {
 
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
+        @Column(name = "expenses_name")
         private String expensesName;
 
+        @Column(name = "amount")
         private Integer amount; 
 
+        @Column(name = "rec_type")
         private RecType recType;
 
+        @Column(name = "start_date")
         private LocalDate startDate;
 
+        @Column(name = "end_date")
         private LocalDate endDate;
+
+        @ManyToOne
+        @JoinColumn(name = "user_id")
+        private User user;
 
         public Expenses (){}
 
@@ -76,5 +91,13 @@ import jakarta.persistence.Id;
 
     public Long getId() {
         return id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

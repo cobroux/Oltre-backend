@@ -1,5 +1,8 @@
 package io.oltre_backend.expenses;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,5 +36,12 @@ public class ExpensesController {
     public void deleteExpenses(final Long id){
         expensesService.deleteExpenses(id);
     } 
+
+    @PostMapping("/updateExpenses")
+    public void updateExpenses(Long id, String expensesName, Integer amount, RecType recType, String  startDate, String endDate){
+
+         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");        
+         expensesService.updateExpenses(id, expensesName, amount, recType, LocalDate.parse(startDate, formatter), LocalDate.parse(endDate, formatter));
+     }
 
 }

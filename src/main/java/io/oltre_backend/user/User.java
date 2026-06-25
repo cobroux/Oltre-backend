@@ -1,11 +1,14 @@
 package io.oltre_backend.user;
 
 import java.time.LocalDate;
+import java.util.Set;
 
+import io.oltre_backend.expenses.Expenses;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -21,6 +24,9 @@ public class User {
     private Integer age;
 
     private LocalDate birthDate;
+
+    @OneToMany(mappedBy="user")
+    private Set<Expenses> expenses  = new java.util.HashSet<>();;
 
     public User() {}
 
@@ -56,5 +62,18 @@ public class User {
 
     public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
+    }
+
+    public Set<Expenses> getExpenses() {
+        return expenses;
+    }
+
+    public void setExpenses(Set<Expenses> expenses) {
+        this.expenses = expenses;
+    }
+
+    public void addExpense(Expenses expense) {
+        this.expenses.add(expense);
+        expense.setUser(this);
     }
 }
