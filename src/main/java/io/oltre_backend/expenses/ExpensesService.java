@@ -1,5 +1,8 @@
 package io.oltre_backend.expenses;
 
+import java.time.LocalDate;
+
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -33,5 +36,9 @@ public class ExpensesService {
         Expenses savedExpenses = expensesRepository.save(expenses);
         return toDto(savedExpenses);
     }
+
+     public void updateExpenses(Long id, String expensesName, Integer amount, RecType recType, LocalDate startDate, LocalDate endDate){
+        expensesRepository.updateExpenses(id, expensesName, amount, recType, startDate, endDate);
+     }
 
 }
