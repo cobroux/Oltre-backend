@@ -18,11 +18,6 @@ jobs:
           MYSQL_PASSWORD: oltre
         ports:
           - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
 
     steps:
       - name: Checkout code
@@ -40,9 +35,9 @@ jobs:
       - name: Run tests
         run: mvn test
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/oltre
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/oltre
           SPRING_DATASOURCE_USERNAME: oltre
           SPRING_DATASOURCE_PASSWORD: oltre
 
       - name: Build
-        run: mvn clean package -DskipTests
+        run: mvn package -DskipTests
