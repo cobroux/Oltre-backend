@@ -12,7 +12,7 @@ public class UserService {
             return dto;
         }
 
-    UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
