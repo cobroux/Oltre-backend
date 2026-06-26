@@ -9,18 +9,15 @@ import org.springframework.data.repository.query.Param;
 
 import jakarta.transaction.Transactional;
 
-public interface ExpensesRepository extends JpaRepository <Expenses, Long>{
+public interface ExpensesRepository extends JpaRepository<Expenses, Long> {
 
     @Transactional
     @Modifying(clearAutomatically = true)
-    @Query(value = "UPDATE expenses e SET e.expenses_name = :expensesName, e.amount = :amount, e.start_date = :startDate, e.end_date = :endDate WHERE e.ID = :id", nativeQuery = true)
-    void updateExpenses(@Param("id") Long id, 
-                            @Param("expensesName") String expensesName,
-                                @Param("amount") Integer amount, 
-                                    @Param("recType") RecType recType, 
-                                        @Param("startDate") LocalDate startDate,
-                                            @Param("endDate") LocalDate endDate );
-
-                                            
-
+    @Query(value = "UPDATE expenses e SET e.expenses_name = :expensesName, e.amount = :amount, e.rec_type = :recType, e.start_date = :startDate, e.end_date = :endDate WHERE e.id = :id", nativeQuery = true)
+    void updateExpenses(@Param("id") Long id,
+                        @Param("expensesName") String expensesName,
+                        @Param("amount") Integer amount,
+                        @Param("recType") String recType,
+                        @Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate);
 }
