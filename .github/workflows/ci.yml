@@ -1,4 +1,4 @@
-name: CI Spring Boot MySQL
+name: CI Spring Boot
 
 on:
   push:
@@ -7,22 +7,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    services:
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: oltre
-          MYSQL_USER: oltre
-          MYSQL_PASSWORD: oltre
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root --password=root"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
+    # Plus besoin de service MySQL — Testcontainers le gère !
 
     steps:
       - name: Checkout code
@@ -36,7 +21,7 @@ jobs:
           cache: maven
 
       - name: Run tests
-        run: mvn test -Dspring.datasource.url=jdbc:mysql://127.0.0.1:3306/oltre -Dspring.datasource.username=oltre -Dspring.datasource.password=oltre -Dspring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver -Dspring.jpa.hibernate.ddl-auto=update -Dspring.sql.init.mode=always -Dspring.jpa.defer-datasource-initialization=true
+        run: mvn test
 
       - name: Build
         run: mvn package -DskipTests
