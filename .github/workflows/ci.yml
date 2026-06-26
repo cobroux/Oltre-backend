@@ -36,7 +36,7 @@ jobs:
           cache: maven
 
       - name: Run tests
-        run: mvn test -e -Dspring.datasource.url=jdbc:mysql://127.0.0.1:3306/oltre -Dspring.datasource.username=oltre -Dspring.datasource.password=oltre -Dspring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver -Dspring.jpa.hibernate.ddl-auto=update -Dspring.sql.init.mode=always -Dspring.jpa.defer-datasource-initialization=true
+        run: mvn test -Dspring.datasource.url=jdbc:mysql://127.0.0.1:3306/oltre -Dspring.datasource.username=oltre -Dspring.datasource.password=oltre -Dspring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver -Dspring.jpa.hibernate.ddl-auto=update -Dspring.sql.init.mode=always -Dspring.jpa.defer-datasource-initialization=true
 
       - name: Build
         run: mvn package -DskipTests
