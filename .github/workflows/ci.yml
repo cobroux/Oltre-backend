@@ -7,7 +7,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # Plus besoin de service MySQL — Testcontainers le gère !
 
     steps:
       - name: Checkout code
@@ -22,6 +21,8 @@ jobs:
 
       - name: Run tests
         run: mvn test
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
 
       - name: Build
         run: mvn package -DskipTests
