@@ -3,6 +3,8 @@ package io.oltre_backend.expenses;
 import java.time.LocalDate;
 
 public class ExpensesDto {
+
+        private Long id;
     
         private String expensesName;
 
@@ -14,13 +16,20 @@ public class ExpensesDto {
 
         private LocalDate endDate;
 
-    public ExpensesDto(String expensesName, Integer amount,  RecType recType, LocalDate startDate, LocalDate endDate) {
+        private LocalDate nextPaymentDate;
+
+
+    public ExpensesDto(Long id, String expensesName, Integer amount,  RecType recType, LocalDate startDate, LocalDate endDate) {
+        this.id = id;
         this.amount = amount;
         this.endDate = endDate;
         this.expensesName = expensesName;
         this.recType = recType;
         this.startDate = startDate;
     }
+
+    public ExpensesDto() {}
+
 
     public String getExpensesName() {
         return expensesName;
@@ -60,6 +69,22 @@ public class ExpensesDto {
 
     public RecType getRecType() {
         return recType;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public LocalDate getNextPaymentDate() {
+        return nextPaymentDate;
+    }
+
+    public void setNextPaymentDate(LocalDate nextPaymentDate) {
+        this.nextPaymentDate = nextPaymentDate;
     }
         
 }
