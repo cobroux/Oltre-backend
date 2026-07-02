@@ -20,4 +20,8 @@ public interface ExpensesRepository extends JpaRepository<Expenses, Long> {
                         @Param("recType") String recType,
                         @Param("startDate") LocalDate startDate,
                         @Param("endDate") LocalDate endDate);
+
+
+    @Query(value = "SELECT SUM(e.amount) as total_month FROM expenses e WHERE e.", nativeQuery = true)                    
+    void getTotalMonth();                    
 }
