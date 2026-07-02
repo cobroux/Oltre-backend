@@ -1,4 +1,4 @@
-name: CI MySQL Spring Boot
+name: CI Spring Boot
 
 on:
   push:
@@ -7,22 +7,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    services:
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: oltre
-          MYSQL_USER: oltre
-          MYSQL_PASSWORD: oltre
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
 
     steps:
       - name: Checkout code
@@ -33,16 +17,12 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-
-      - name: Wait for MySQL
-        run: sleep 20
+          cache: maven
 
       - name: Run tests
         run: mvn test
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/oltre
-          SPRING_DATASOURCE_USERNAME: oltre
-          SPRING_DATASOURCE_PASSWORD: oltre
+          TESTCONTAINERS_RYUK_DISABLED: "true"
 
       - name: Build
-        run: mvn clean package -DskipTests
+        run: mvn package -DskipTests
