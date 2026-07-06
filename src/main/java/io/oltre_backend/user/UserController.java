@@ -17,7 +17,6 @@ public class UserController{
         this.userService = userService;
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/{id}")
     public UserDTO getUser(@PathVariable Long id) {
         return userService.getUserById(id);

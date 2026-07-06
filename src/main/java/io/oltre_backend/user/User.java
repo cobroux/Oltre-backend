@@ -1,9 +1,13 @@
 package io.oltre_backend.user;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import io.oltre_backend.expenses.Expenses;
+import io.oltre_backend.tasks.Tasks;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,6 +31,9 @@ public class User {
 
     @OneToMany(mappedBy="user")
     private Set<Expenses> expenses  = new java.util.HashSet<>();;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Tasks> tasks = new ArrayList<>();
 
     public User() {}
 
@@ -75,5 +82,18 @@ public class User {
     public void addExpense(Expenses expense) {
         this.expenses.add(expense);
         expense.setUser(this);
+    }
+
+    public void addTask(Tasks task) {
+        tasks.add(task);
+        task.setUser(this);
+    }
+
+    public List<Tasks> getTasks() {
+        return tasks;
+    }
+
+    public void setTasks(List<Tasks> tasks) {
+        this.tasks = tasks;
     }
 }
