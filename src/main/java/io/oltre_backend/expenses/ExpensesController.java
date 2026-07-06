@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/expenses")
-@CrossOrigin(origins = "http://localhost:4200")
+ 
 public class ExpensesController {
 
     private final ExpensesService expensesService;
@@ -24,19 +24,19 @@ public class ExpensesController {
         this.expensesService = expensesService;
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
+     
     @GetMapping("/{id}")
     public ExpensesDto getExpense(@PathVariable Long id){
         return expensesService.getExpensesById(id);
     } 
 
-    @CrossOrigin(origins = "http://localhost:4200")
+     
     @GetMapping("/all")
     public Iterable<ExpensesDto> getExpenses() {
         return expensesService.getExpensess();
     }
+  
 
-    @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/amountPerMonth")
     public Integer getAmountPerMonth() {
 
@@ -69,7 +69,6 @@ public class ExpensesController {
     }
 
         
-    @CrossOrigin(origins = "http://localhost:4200")
     @PostMapping("/save")
     public ExpensesDto saveExpenses(@RequestBody ExpensesDto dto) {
         Expenses expenses = new Expenses(
@@ -82,11 +81,12 @@ public class ExpensesController {
         return expensesService.saveExpenses(expenses);
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
+     
     @DeleteMapping( "/{id}")
     public void deleteExpenses( @PathVariable final Long id){
         expensesService.deleteExpenses(id);
     } 
+
 
     @PostMapping("/updateExpenses")
     public void updateExpenses(Long id, String expensesName, Integer amount, RecType recType, String  startDate, String endDate){
@@ -94,7 +94,5 @@ public class ExpensesController {
          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");        
          expensesService.updateExpenses(id, expensesName, amount, recType, LocalDate.parse(startDate, formatter), LocalDate.parse(endDate, formatter));
      }
-
-
 
 }
