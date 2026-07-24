@@ -3,7 +3,6 @@ package io.oltre_backend.expenses;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,13 +45,18 @@ public class ExpensesController {
         LocalDate currentDate = LocalDate.now();
         
         for(ExpensesDto e : expenses){
+            System.out.println("ex "+ e.getExpensesName());
             if(currentDate.isBefore(e.getStartDate())){
                  switch(e.getRecType()){
                     case RecType.Monthly : 
                         amount+=e.getAmount();
+                        System.out.println("m amount "+ amount);
+
                         break;
                     case RecType.Daily : 
                         amount+=(e.getAmount()*currentDate.lengthOfMonth());
+                                                System.out.println("d amount "+ amount);
+
                         break;
                     case RecType.Yearly :
                         if(currentDate.getMonth() == e.getStartDate().getMonth()){
