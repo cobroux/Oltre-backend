@@ -3,14 +3,7 @@ package io.oltre_backend.tasks;
 import java.time.LocalDate;
 import java.util.List;
 
-import io.oltre_backend.expenses.Expenses;
-import io.oltre_backend.expenses.ExpensesDto;
-import io.oltre_backend.tasks.task_enum.TasksStatus;
-
 import org.springframework.stereotype.Service;
-
-import io.oltre_backend.expenses.Expenses;
-import io.oltre_backend.expenses.ExpensesDto;
 
 @Service
 public class TasksService {
