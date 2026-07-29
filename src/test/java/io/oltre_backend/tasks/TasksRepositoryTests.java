@@ -9,8 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import io.oltre_backend.AbstractIntegrationTest;
 import io.oltre_backend.tasks.task_enum.*;
-import io.oltre_backend.tasks.Tasks;
-import io.oltre_backend.tasks.TasksRepository;
 import io.oltre_backend.user.User;
 import io.oltre_backend.user.UserRepository;
 import jakarta.transaction.Transactional;
