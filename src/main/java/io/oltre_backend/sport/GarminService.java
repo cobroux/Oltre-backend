@@ -15,9 +15,12 @@ public class GarminService {
 
     private final RestClient restClient;
 
-    public GarminService(@Value("${garmin.service-url}") String garminServiceUrl) {
+    public GarminService(
+            @Value("${garmin.service-url}") String garminServiceUrl,
+            @Value("${garmin.service-token}") String garminServiceToken) {
         this.restClient = RestClient.builder()
                 .baseUrl(garminServiceUrl)
+                .defaultHeader("X-Internal-Token", garminServiceToken)
                 .build();
     }
 
