@@ -8,6 +8,7 @@ import java.util.Set;
 import io.oltre_backend.expenses.Expenses;
 import io.oltre_backend.tasks.Tasks;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,6 +29,11 @@ public class User {
     private Integer age;
 
     private LocalDate birthDate;
+
+    @Column(unique = true)
+    private String email;
+ 
+    private String password;
 
     @OneToMany(mappedBy="user")
     private Set<Expenses> expenses  = new java.util.HashSet<>();;
@@ -95,5 +101,21 @@ public class User {
 
     public void setTasks(List<Tasks> tasks) {
         this.tasks = tasks;
+    }
+
+     public String getEmail() { 
+        return email;
+     }
+
+    public void setEmail(String email) { 
+        this.email = email; 
+    }
+
+    public String getPassword() { 
+        return password; 
+    }
+
+    public void setPassword(String password) { 
+        this.password = password; 
     }
 }
