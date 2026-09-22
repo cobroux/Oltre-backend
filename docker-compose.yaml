@@ -12,6 +12,42 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uoltre", "-poltre"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: oltre-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/oltre
+      SPRING_DATASOURCE_USERNAME: oltre
+      SPRING_DATASOURCE_PASSWORD: oltre
+      GARMIN_SERVICE_URL: ${GARMIN_SERVICE_URL}
+      GARMIN_SERVICE_TOKEN: ${GARMIN_SERVICE_TOKEN}
+    ports:
+      - "8080:8080"
+
+  # Assumes oltre-frontend is cloned as a sibling directory of this repo,
+  # e.g.:
+  #   some-folder/
+  #     Oltre-backend/   (this repo)
+  #     oltre-frontend/
+  # Adjust the build context below if your layout differs.
+  frontend:
+    build: ../oltre-frontend
+    container_name: oltre-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
 
 volumes:
   mysql_data:
