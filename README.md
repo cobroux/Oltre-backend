@@ -1,5 +1,32 @@
 # Oltre-backend
 
+## Lancer avec Docker (backend + frontend + MySQL)
+
+Clone les deux repos comme dossiers voisins :
+
+```
+mon-dossier/
+  Oltre-backend/     (ce repo)
+  oltre-frontend/
+```
+
+Puis, dans `Oltre-backend/` :
+
+```bash
+cp .env.example .env
+# édite .env : GARMIN_SERVICE_URL et GARMIN_SERVICE_TOKEN
+
+docker compose up --build
+```
+
+- Frontend : http://localhost:4200
+- Backend : http://localhost:8080
+- MySQL : localhost:3306
+
+`docker-compose.yaml` construit et lance les 3 services ensemble ; toutes
+les variables (dont `GARMIN_SERVICE_URL`/`GARMIN_SERVICE_TOKEN`) sont
+injectées via `.env` (jamais committé — voir `.env.example`).
+
 ## Intégration Garmin
 
 Les données sportives viennent de Garmin Connect via le service REST
