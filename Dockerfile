@@ -13,10 +13,10 @@ COPY --from=build /app/target/*.jar app.jar
 # since the JVM's own cacerts doesn't know about that root - even though
 # the OS/browser does, from the Windows trust store.
 COPY certs/ /usr/local/share/ca-certificates/corp/
-RUN for cert in /usr/local/share/ca-certificates/corp/*.crt; do \
+RUN for cert in /usr/local/share/ca-certificates/corp/*; do \
       [ -f "$cert" ] || continue; \
       keytool -importcert -noprompt -trustcacerts \
-        -alias "$(basename "$cert" .crt)" \
+        -alias "$(basename "$cert")" \
         -file "$cert" \
         -keystore "$JAVA_HOME/lib/security/cacerts" \
         -storepass changeit; \
