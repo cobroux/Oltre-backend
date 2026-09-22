@@ -23,6 +23,12 @@ docker compose up --build
 - Backend : http://localhost:8080
 - MySQL : localhost:3306
 
+**Sur un réseau d'entreprise qui intercepte le HTTPS** (proxy Palo Alto,
+Zscaler, Netskope...) : les appels du backend vers le sidecar Garmin
+échoueront avec une erreur `PKIX path building failed` tant que le
+certificat racine de l'entreprise n'est pas connu de la JVM. Dépose-le
+dans `certs/` (voir `certs/README.md`) avant de builder.
+
 `docker-compose.yaml` construit et lance les 3 services ensemble ; toutes
 les variables (dont `GARMIN_SERVICE_URL`/`GARMIN_SERVICE_TOKEN`) sont
 injectées via `.env` (jamais committé — voir `.env.example`).
