@@ -16,23 +16,38 @@ public class AuthController {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final LoginAttemptService loginAttemptService;
 
     public AuthController(UserRepository userRepository,
                           JwtService jwtService,
-                          PasswordEncoder passwordEncoder) {
+                          PasswordEncoder passwordEncoder,
+                          LoginAttemptService loginAttemptService) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        User user = userRepository.findByEmail(request.email());
-
-        if (user == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
+        if (request.email() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Email ou mot de passe incorrect"));
         }
+
+        if (loginAttemptService.isLocked(request.email())) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("message", "Trop de tentatives échouées. Réessaie dans quelques minutes."));
+        }
+
+        User user = userRepository.findByEmail(request.email());
+
+        if (user == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
+            loginAttemptService.recordFailure(request.email());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Email ou mot de passe incorrect"));
+        }
+        loginAttemptService.recordSuccess(request.email());
 
         String token = jwtService.generateToken(user.getId(), user.getEmail());
 
@@ -51,8 +66,8 @@ public class AuthController {
         if (request.email() == null || !request.email().matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
             return ResponseEntity.badRequest().body(Map.of("message", "Email invalide"));
         }
-        if (request.password() == null || request.password().length() < 6) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Le mot de passe doit contenir au moins 6 caractères"));
+        if (request.password() == null || request.password().length() < 8) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Le mot de passe doit contenir au moins 8 caractères"));
         }
         if (userRepository.existsByEmail(request.email())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Cet email est déjà utilisé"));
@@ -75,9 +90,4 @@ public class AuthController {
 
     record LoginRequest(String email, String password) {}
     record RegisterRequest(String username, String email, String password) {}
-
-    @GetMapping("/hash")
-    public String hash(@RequestParam String password) {
-        return passwordEncoder.encode(password);
-    }
 }
