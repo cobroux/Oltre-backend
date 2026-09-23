@@ -3,6 +3,8 @@ package io.oltre_backend.meal;
 import java.time.LocalDate;
 import jakarta.persistence.*;
 
+import io.oltre_backend.user.User;
+
 @Entity
 @Table(name = "meals")
 public class Meal {
@@ -24,6 +26,10 @@ public class Meal {
     @Column(name = "meal_date")
     private LocalDate mealDate;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     public Meal() {}
 
     public Long getId() { return id; }
@@ -36,4 +42,6 @@ public class Meal {
     public void setMealType(MealType mealType) { this.mealType = mealType; }
     public LocalDate getMealDate() { return mealDate; }
     public void setMealDate(LocalDate mealDate) { this.mealDate = mealDate; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }
