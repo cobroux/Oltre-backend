@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.oltre_backend.auth.CurrentUser;
+
 
 @RestController
 @RequestMapping("/api/expenses")
@@ -26,21 +28,21 @@ public class ExpensesController {
      
     @GetMapping("/{id}")
     public ExpensesDto getExpense(@PathVariable Long id){
-        return expensesService.getExpensesById(id);
-    } 
+        return expensesService.getExpensesById(id, CurrentUser.id());
+    }
 
-     
+
     @GetMapping("/all")
     public Iterable<ExpensesDto> getExpenses() {
-        return expensesService.getExpensess();
+        return expensesService.getExpensess(CurrentUser.id());
     }
-  
+
 
     @GetMapping("/amountPerMonth")
     public Integer getAmountPerMonth() {
 
         Integer amount = 0;
-        Iterable<ExpensesDto> expenses = expensesService.getExpensess();
+        Iterable<ExpensesDto> expenses = expensesService.getExpensess(CurrentUser.id());
 
         LocalDate currentDate = LocalDate.now();
         
@@ -82,21 +84,21 @@ public class ExpensesController {
             dto.getStartDate(),
             null  // endDate
         );
-        return expensesService.saveExpenses(expenses);
+        return expensesService.saveExpenses(expenses, CurrentUser.id());
     }
 
-     
+
     @DeleteMapping( "/{id}")
     public void deleteExpenses( @PathVariable final Long id){
-        expensesService.deleteExpenses(id);
-    } 
+        expensesService.deleteExpenses(id, CurrentUser.id());
+    }
 
 
     @PostMapping("/updateExpenses")
     public void updateExpenses(Long id, String expensesName, Integer amount, RecType recType, String  startDate, String endDate){
 
-         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");        
-         expensesService.updateExpenses(id, expensesName, amount, recType, LocalDate.parse(startDate, formatter), LocalDate.parse(endDate, formatter));
+         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+         expensesService.updateExpenses(id, CurrentUser.id(), expensesName, amount, recType, LocalDate.parse(startDate, formatter), LocalDate.parse(endDate, formatter));
      }
 
 }

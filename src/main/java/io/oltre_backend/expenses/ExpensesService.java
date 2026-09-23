@@ -3,15 +3,21 @@ package io.oltre_backend.expenses;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import io.oltre_backend.user.UserRepository;
 
 @Service
 public class ExpensesService {
 
     public final ExpensesRepository expensesRepository;
+    private final UserRepository userRepository;
 
-    public ExpensesService(ExpensesRepository expensesRepository) {
+    public ExpensesService(ExpensesRepository expensesRepository, UserRepository userRepository) {
         this.expensesRepository = expensesRepository;
+        this.userRepository = userRepository;
     }
 
     public ExpensesDto toDto(Expenses e) {
@@ -32,27 +38,33 @@ public class ExpensesService {
         return dto;
     }
 
-    public ExpensesDto getExpensesById(Long id) {
-        return toDto(expensesRepository.findById(id).orElseThrow());
+    public ExpensesDto getExpensesById(Long id, Long userId) {
+        return toDto(expensesRepository.findByIdAndUser_Id(id, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
     }
 
-    public List<ExpensesDto> getExpensess() {
-    return expensesRepository.findAll()
+    public List<ExpensesDto> getExpensess(Long userId) {
+    return expensesRepository.findByUser_Id(userId)
             .stream()
             .map(this::toDto)
             .toList();
-    }   
+    }
 
-    public void deleteExpenses(final Long id) {
+    public void deleteExpenses(final Long id, Long userId) {
+        expensesRepository.findByIdAndUser_Id(id, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         expensesRepository.deleteById(id);
     }
 
-    public ExpensesDto saveExpenses(Expenses expenses) {
+    public ExpensesDto saveExpenses(Expenses expenses, Long userId) {
+        expenses.setUser(userRepository.getReferenceById(userId));
         return toDto(expensesRepository.save(expenses));
     }
 
-    public void updateExpenses(Long id, String expensesName, Integer amount, RecType recType, LocalDate startDate, LocalDate endDate) {
-        expensesRepository.updateExpenses(id, expensesName, amount, recType.name(), startDate, endDate);
+    public void updateExpenses(Long id, Long userId, String expensesName, Integer amount, RecType recType, LocalDate startDate, LocalDate endDate) {
+        expensesRepository.findByIdAndUser_Id(id, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        expensesRepository.updateExpenses(id, userId, expensesName, amount, recType.name(), startDate, endDate);
     }
 
     

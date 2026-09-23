@@ -3,16 +3,22 @@ package io.oltre_backend.tasks;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import io.oltre_backend.user.UserRepository;
 
 @Service
 public class TasksService {
-    
+
 
     public final TasksRepository tasksRepository;
+    private final UserRepository userRepository;
 
-    public TasksService(TasksRepository tasksRepository) {
+    public TasksService(TasksRepository tasksRepository, UserRepository userRepository) {
         this.tasksRepository = tasksRepository;
+        this.userRepository = userRepository;
     }
 
     public TasksDto toDto(Tasks e) {
@@ -30,28 +36,34 @@ public class TasksService {
             return dto;
         }
 
-    public void deleteTasks(final Long id) {
+    public void deleteTasks(final Long id, Long userId) {
+        tasksRepository.findByIdAndUser_Id(id, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         tasksRepository.deleteById(id);
     }
 
-    public TasksDto getTasksById(Long id) {
-        return toDto(tasksRepository.findById(id).orElseThrow());
+    public TasksDto getTasksById(Long id, Long userId) {
+        return toDto(tasksRepository.findByIdAndUser_Id(id, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
     }
 
 
-    public TasksDto saveTasks(Tasks expenses) {
-        return toDto(tasksRepository.save(expenses));
+    public TasksDto saveTasks(Tasks tasks, Long userId) {
+        tasks.setUser(userRepository.getReferenceById(userId));
+        return toDto(tasksRepository.save(tasks));
     }
 
-    public List<TasksDto> getTasks() {
-    return tasksRepository.findAll()
+    public List<TasksDto> getTasks(Long userId) {
+    return tasksRepository.findByUser_Id(userId)
             .stream()
             .map(this::toDto)
             .toList();
-    }   
+    }
 
-     public void updateTasksStatus(Long id, String status) {        
-        tasksRepository.updateTasksStatus(id, status);
+     public void updateTasksStatus(Long id, Long userId, String status) {
+        tasksRepository.findByIdAndUser_Id(id, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        tasksRepository.updateTasksStatus(id, userId, status);
     }
 
 }

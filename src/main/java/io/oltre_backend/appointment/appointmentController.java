@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.oltre_backend.auth.CurrentUser;
+
 @RestController
 @RequestMapping("/api/appointments")
 public class appointmentController {
@@ -21,12 +23,12 @@ public class appointmentController {
     @GetMapping("/week")
     public List<appointmentDTO> getWeek(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate monday) {
-        return service.getWeek(monday);
+        return service.getWeek(monday, CurrentUser.id());
     }
 
     @PostMapping("/save")
-    public appointmentDTO save(@RequestBody appointmentDTO dto) { return service.save(dto); }
+    public appointmentDTO save(@RequestBody appointmentDTO dto) { return service.save(dto, CurrentUser.id()); }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) { service.delete(id); }
+    public void delete(@PathVariable Long id) { service.delete(id, CurrentUser.id()); }
 }
