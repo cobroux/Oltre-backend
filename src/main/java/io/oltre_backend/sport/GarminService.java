@@ -1,7 +1,10 @@
 package io.oltre_backend.sport;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -67,6 +70,40 @@ public class GarminService {
         } catch (HttpClientErrorException.Unauthorized e) {
             throw new GarminAuthException("Compte Garmin non connecté ou session expirée.");
         }
+    }
+
+    public Collection<SportRecordDTO> getRecords(Long userId) {
+        List<GarminActivityDTO> activities = getActivities(userId, null, 200);
+        Map<String, SportRecordDTO> records = new LinkedHashMap<>();
+
+        for (GarminActivityDTO a : activities) {
+            String sportType = a.getSportType() != null ? a.getSportType() : "unknown";
+            SportRecordDTO record = records.computeIfAbsent(sportType, SportRecordDTO::new);
+
+            if (a.getDistance() != null) {
+                double distanceKm = a.getDistance() / 1000.0;
+                if (record.getBestDistanceKm() == null || distanceKm > record.getBestDistanceKm()) {
+                    record.setBestDistanceKm(distanceKm);
+                    record.setBestDistanceDate(a.getStartLocal());
+                }
+            }
+
+            if (a.getElevationGain() != null
+                    && (record.getBestElevationGainM() == null || a.getElevationGain() > record.getBestElevationGainM())) {
+                record.setBestElevationGainM(a.getElevationGain());
+                record.setBestElevationDate(a.getStartLocal());
+            }
+
+            if (a.getAvgSpeed() != null) {
+                double speedKmh = a.getAvgSpeed() * 3.6;
+                if (record.getBestAvgSpeedKmh() == null || speedKmh > record.getBestAvgSpeedKmh()) {
+                    record.setBestAvgSpeedKmh(speedKmh);
+                    record.setBestAvgSpeedDate(a.getStartLocal());
+                }
+            }
+        }
+
+        return records.values();
     }
 
     record ConnectPayload(String email, String password) {}
