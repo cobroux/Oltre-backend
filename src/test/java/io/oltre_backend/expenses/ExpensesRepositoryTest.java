@@ -57,7 +57,7 @@ class ExpensesRepositoryTest extends AbstractIntegrationTest {
         Expenses saved = expensesRepository.save(netflix);
 
         expensesRepository.updateExpenses(
-            saved.getId(), "Netflix Premium", 20,
+            saved.getId(), user.getId(), "Netflix Premium", 20,
             RecType.Monthly.name(), LocalDate.now(), null
         );
         expensesRepository.flush();

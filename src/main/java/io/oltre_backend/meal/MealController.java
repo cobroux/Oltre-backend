@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.oltre_backend.auth.CurrentUser;
+
 @RestController
 @RequestMapping("/api/meals")
 public class MealController {
@@ -26,22 +28,22 @@ public class MealController {
     @GetMapping("/day")
     public List<MealDTO> getByDate(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return mealService.getByDate(date);
+        return mealService.getByDate(date, CurrentUser.id());
     }
 
     @GetMapping("/week")
     public List<MealDTO> getWeek(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate monday) {
-        return mealService.getWeek(monday);
+        return mealService.getWeek(monday, CurrentUser.id());
     }
 
     @PostMapping("/save")
     public MealDTO save(@RequestBody MealDTO dto) {
-        return mealService.save(dto);
+        return mealService.save(dto, CurrentUser.id());
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        mealService.delete(id);
+        mealService.delete(id, CurrentUser.id());
     }
 }
