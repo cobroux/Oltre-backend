@@ -1,6 +1,5 @@
 package io.oltre_backend.sport;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -54,7 +53,7 @@ public class GarminController {
     }
 
     @GetMapping("/records")
-    public Collection<SportRecordDTO> getRecords() {
+    public GarminRecordsDTO getRecords() {
         return garminService.getRecords(CurrentUser.id());
     }
 
