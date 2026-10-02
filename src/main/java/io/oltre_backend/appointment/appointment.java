@@ -37,7 +37,10 @@ public class appointment {
    
     @Column(name = "appt_time")
     private LocalTime apptTime;
-    
+
+    @Column(name = "appt_end_time")
+    private LocalTime apptEndTime;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "appt_type")
     private appointmentType apptType;
@@ -92,11 +95,19 @@ public class appointment {
          return apptTime; 
         }
     
-    public void setApptTime(LocalTime apptTime) { 
+    public void setApptTime(LocalTime apptTime) {
         this.apptTime = apptTime;
      }
-    
-    public appointmentType getApptType() { 
+
+    public LocalTime getApptEndTime() {
+        return apptEndTime;
+    }
+
+    public void setApptEndTime(LocalTime apptEndTime) {
+        this.apptEndTime = apptEndTime;
+    }
+
+    public appointmentType getApptType() {
         return apptType; 
     }
     
