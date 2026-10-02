@@ -53,7 +53,7 @@ public class GarminController {
     }
 
     @GetMapping("/records")
-    public GarminRecordsDTO getRecords() {
+    public GarminRecordsResponseDTO getRecords() {
         return garminService.getRecords(CurrentUser.id());
     }
 

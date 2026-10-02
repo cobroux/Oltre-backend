@@ -86,9 +86,24 @@ public class GarminService {
         return "other";
     }
 
-    public GarminRecordsDTO getRecords(Long userId) {
+    public GarminRecordsResponseDTO getRecords(Long userId) {
         List<GarminActivityDTO> activities = getActivities(userId, null, 500);
+        List<GarminActivityDTO> thisYearActivities = activities.stream()
+                .filter(a -> isCurrentYear(a.getStartLocal()))
+                .toList();
 
+        return new GarminRecordsResponseDTO(
+                computeRecordsForActivities(activities),
+                computeRecordsForActivities(thisYearActivities)
+        );
+    }
+
+    private boolean isCurrentYear(String startLocal) {
+        if (startLocal == null || startLocal.length() < 4) return false;
+        return startLocal.substring(0, 4).equals(String.valueOf(java.time.Year.now().getValue()));
+    }
+
+    private GarminRecordsDTO computeRecordsForActivities(List<GarminActivityDTO> activities) {
         List<GarminActivityDTO> runs = activities.stream()
                 .filter(a -> "running".equals(sportFamily(a.getSportType())))
                 .toList();
