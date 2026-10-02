@@ -12,17 +12,19 @@ public class appointmentDTO {
     private String location;
     private LocalDate apptDate;
     private LocalTime apptTime;
+    private LocalTime apptEndTime;
     private appointmentType apptType;
 
     public appointmentDTO() {}
-    
+
     public appointmentDTO(Long id, String title, String description, String location,
-                          LocalDate apptDate, LocalTime apptTime, appointmentType apptType) {
-        this.id = id; this.title = title; 
+                          LocalDate apptDate, LocalTime apptTime, LocalTime apptEndTime, appointmentType apptType) {
+        this.id = id; this.title = title;
         this.description = description;
-        this.location = location; 
+        this.location = location;
         this.apptDate = apptDate;
-        this.apptTime = apptTime; 
+        this.apptTime = apptTime;
+        this.apptEndTime = apptEndTime;
         this.apptType = apptType;
     }
 
@@ -70,11 +72,19 @@ public class appointmentDTO {
         return apptTime; 
     }
     
-    public void setApptTime(LocalTime apptTime) { 
-        this.apptTime = apptTime; 
+    public void setApptTime(LocalTime apptTime) {
+        this.apptTime = apptTime;
     }
-    
-    public appointmentType getApptType() { 
+
+    public LocalTime getApptEndTime() {
+        return apptEndTime;
+    }
+
+    public void setApptEndTime(LocalTime apptEndTime) {
+        this.apptEndTime = apptEndTime;
+    }
+
+    public appointmentType getApptType() {
         return apptType; 
     }
     
