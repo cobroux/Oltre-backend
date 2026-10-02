@@ -1,7 +1,8 @@
 package io.oltre_backend.sport;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,13 +73,32 @@ public class GarminService {
         }
     }
 
-    public Collection<SportRecordDTO> getRecords(Long userId) {
-        List<GarminActivityDTO> activities = getActivities(userId, null, 200);
-        Map<String, SportRecordDTO> records = new LinkedHashMap<>();
+    private static final double[] RUN_DISTANCE_BRACKET_KM = {5, 10, 15, 20, 21.1, 42.2};
+    private static final String[] RUN_DISTANCE_BRACKET_LABEL = {"5 km", "10 km", "15 km", "20 km", "Semi-marathon", "Marathon"};
 
+    private String sportFamily(String sportType) {
+        String type = sportType != null ? sportType : "";
+        if (type.contains("running")) return "running";
+        if (type.contains("cycling") || type.contains("biking")) return "cycling";
+        if (type.contains("strength")) return "strength";
+        if (type.contains("swim")) return "swim";
+        if (type.contains("walking") || type.contains("hiking")) return "walking";
+        return "other";
+    }
+
+    public GarminRecordsDTO getRecords(Long userId) {
+        List<GarminActivityDTO> activities = getActivities(userId, null, 500);
+
+        List<GarminActivityDTO> runs = activities.stream()
+                .filter(a -> "running".equals(sportFamily(a.getSportType())))
+                .toList();
+
+        Map<String, SportRecordDTO> otherRecords = new LinkedHashMap<>();
         for (GarminActivityDTO a : activities) {
-            String sportType = a.getSportType() != null ? a.getSportType() : "unknown";
-            SportRecordDTO record = records.computeIfAbsent(sportType, SportRecordDTO::new);
+            String family = sportFamily(a.getSportType());
+            if ("running".equals(family)) continue;
+
+            SportRecordDTO record = otherRecords.computeIfAbsent(family, SportRecordDTO::new);
 
             if (a.getDistance() != null) {
                 double distanceKm = a.getDistance() / 1000.0;
@@ -103,7 +123,43 @@ public class GarminService {
             }
         }
 
-        return records.values();
+        return new GarminRecordsDTO(computeRunningRecords(runs), otherRecords.values());
+    }
+
+    private List<RunningRecordDTO> computeRunningRecords(List<GarminActivityDTO> runs) {
+        List<RunningRecordDTO> result = new ArrayList<>();
+
+        for (int i = 0; i < RUN_DISTANCE_BRACKET_KM.length; i++) {
+            double targetKm = RUN_DISTANCE_BRACKET_KM[i];
+            GarminActivityDTO best = null;
+            for (GarminActivityDTO a : runs) {
+                if (a.getDistance() == null || a.getMovingTime() == null) continue;
+                double km = a.getDistance() / 1000.0;
+                if (km < targetKm * 0.9 || km > targetKm * 1.1) continue;
+                if (best == null || a.getMovingTime() < best.getMovingTime()) {
+                    best = a;
+                }
+            }
+            if (best != null) {
+                result.add(new RunningRecordDTO(RUN_DISTANCE_BRACKET_LABEL[i], targetKm,
+                        best.getDistance() / 1000.0, best.getMovingTime(), best.getStartLocal()));
+            }
+        }
+
+        runs.stream()
+                .filter(a -> a.getDistance() != null && a.getMovingTime() != null)
+                .max(Comparator.comparingDouble(GarminActivityDTO::getDistance))
+                .ifPresent(longest -> {
+                    double km = longest.getDistance() / 1000.0;
+                    boolean alreadyCovered = result.stream()
+                            .anyMatch(r -> Math.abs(r.getDistanceKm() - km) < 0.1);
+                    if (!alreadyCovered) {
+                        result.add(new RunningRecordDTO("Plus longue sortie", km, km,
+                                longest.getMovingTime(), longest.getStartLocal()));
+                    }
+                });
+
+        return result;
     }
 
     record ConnectPayload(String email, String password) {}
