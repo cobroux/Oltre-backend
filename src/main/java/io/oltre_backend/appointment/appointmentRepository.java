@@ -5,4 +5,6 @@ import java.util.List;
 
 public interface appointmentRepository extends JpaRepository<appointment, Long> {
     List<appointment> findByApptDateBetweenAndUser_IdOrderByApptTimeAsc(LocalDate start, LocalDate end, Long userId);
+
+    List<appointment> findByApptDateAndUser_Id(LocalDate apptDate, Long userId);
 }
