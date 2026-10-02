@@ -4,5 +4,5 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface appointmentRepository extends JpaRepository<appointment, Long> {
-    List<appointment> findByApptDateBetweenOrderByApptTimeAsc(LocalDate start, LocalDate end);
+    List<appointment> findByApptDateBetweenAndUser_IdOrderByApptTimeAsc(LocalDate start, LocalDate end, Long userId);
 }

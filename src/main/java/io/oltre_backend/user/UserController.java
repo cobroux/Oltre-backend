@@ -1,7 +1,7 @@
 package io.oltre_backend.user;
 
+import io.oltre_backend.auth.CurrentUser;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,9 +16,9 @@ public class UserController{
         this.userService = userService;
     }
 
-    @GetMapping("/{id}")
-    public UserDTO getUser(@PathVariable Long id) {
-        return userService.getUserById(id);
+    @GetMapping("/me")
+    public UserDTO getCurrentUser() {
+        return userService.getUserById(CurrentUser.id());
     }
 
 }

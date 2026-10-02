@@ -9,7 +9,11 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import io.oltre_backend.user.User;
 
 @Entity
 @Table(name = "appointments")
@@ -37,6 +41,10 @@ public class appointment {
     @Enumerated(EnumType.STRING)
     @Column(name = "appt_type")
     private appointmentType apptType;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     public appointment() {}
     
@@ -92,7 +100,11 @@ public class appointment {
         return apptType; 
     }
     
-    public void setApptType(appointmentType apptType) { 
-        this.apptType = apptType; 
+    public void setApptType(appointmentType apptType) {
+        this.apptType = apptType;
     }
+
+    public User getUser() { return user; }
+
+    public void setUser(User user) { this.user = user; }
 }

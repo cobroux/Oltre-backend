@@ -9,12 +9,13 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import io.oltre_backend.auth.CurrentUser;
 
 @RestController
 @RequestMapping("/api/garmin")
@@ -27,29 +28,28 @@ public class GarminController {
         this.garminService = garminService;
     }
 
-    @PostMapping("/{userId}/connect")
-    public ResponseEntity<Void> connect(@PathVariable Long userId, @RequestBody GarminConnectRequest request) {
-        garminService.connect(userId, request.getEmail(), request.getPassword());
+    @PostMapping("/connect")
+    public ResponseEntity<Void> connect(@RequestBody GarminConnectRequest request) {
+        garminService.connect(CurrentUser.id(), request.getEmail(), request.getPassword());
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{userId}/status")
-    public Map<String, Boolean> status(@PathVariable Long userId) {
-        return Map.of("connected", garminService.isConnected(userId));
+    @GetMapping("/status")
+    public Map<String, Boolean> status() {
+        return Map.of("connected", garminService.isConnected(CurrentUser.id()));
     }
 
-    @DeleteMapping("/{userId}/connect")
-    public ResponseEntity<Void> disconnect(@PathVariable Long userId) {
-        garminService.disconnect(userId);
+    @DeleteMapping("/connect")
+    public ResponseEntity<Void> disconnect() {
+        garminService.disconnect(CurrentUser.id());
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{userId}/activities")
+    @GetMapping("/activities")
     public List<GarminActivityDTO> getActivities(
-            @PathVariable Long userId,
             @RequestParam(required = false) String monday,
             @RequestParam(defaultValue = "50") int limit) {
-        return garminService.getActivities(userId, monday, limit);
+        return garminService.getActivities(CurrentUser.id(), monday, limit);
     }
 
     @ExceptionHandler(GarminAuthException.class)
