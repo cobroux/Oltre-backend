@@ -1,5 +1,6 @@
 package io.oltre_backend.sport;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -50,6 +51,11 @@ public class GarminController {
             @RequestParam(required = false) String monday,
             @RequestParam(defaultValue = "50") int limit) {
         return garminService.getActivities(CurrentUser.id(), monday, limit);
+    }
+
+    @GetMapping("/records")
+    public Collection<SportRecordDTO> getRecords() {
+        return garminService.getRecords(CurrentUser.id());
     }
 
     @ExceptionHandler(GarminAuthException.class)
