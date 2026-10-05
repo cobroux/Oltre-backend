@@ -52,3 +52,27 @@ Puis ouvre `https://ton-domaine` dans un navigateur.
 git pull
 docker compose -f docker-compose.prod.yaml up -d --build
 ```
+
+## 6. Sauvegardes
+
+Les données MySQL vivent dans un volume Docker — sans sauvegarde, tout est
+perdu si le VPS meurt. Mets en place une sauvegarde quotidienne via cron :
+
+```bash
+crontab -e
+# Ajouter :
+0 3 * * * cd /chemin/vers/Oltre-backend && ./scripts/backup-mysql.sh >> /var/log/oltre-backup.log 2>&1
+```
+
+Ça écrit des dumps gzippés dans `./backups/` (ignoré par git) et supprime
+automatiquement ceux de plus de 14 jours (`RETENTION_DAYS` dans le script).
+
+Pour restaurer :
+
+```bash
+./scripts/restore-mysql.sh backups/oltre-20260101-030000.sql.gz
+```
+
+⚠️ Pense à copier `./backups/` ailleurs régulièrement (un autre serveur, un
+stockage objet...) — une sauvegarde qui vit sur la même machine que les
+données originales ne protège pas contre la perte du VPS lui-même.
