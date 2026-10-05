@@ -1,0 +1,77 @@
+# Production deployment: MySQL/backend/frontend are not reachable
+# directly from the host, only from Caddy, which terminates HTTPS
+# (automatic Let's Encrypt cert for $DOMAIN) and reverse-proxies
+# /api/* and /auth/* to the backend, everything else to the frontend.
+#
+# Usage on the VPS:
+#   cp .env.example .env   # fill in real values, especially DOMAIN
+#   docker compose -f docker-compose.prod.yaml up -d --build
+#
+# Assumes oltre-frontend is cloned as a sibling directory, same as
+# docker-compose.yaml (see its own comment for the layout).
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: oltre-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: oltre
+      MYSQL_USER: oltre
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uoltre", "-p${MYSQL_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: oltre-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/oltre
+      SPRING_DATASOURCE_USERNAME: oltre
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      GARMIN_SERVICE_URL: ${GARMIN_SERVICE_URL}
+      GARMIN_SERVICE_TOKEN: ${GARMIN_SERVICE_TOKEN}
+      JWT_SECRET: ${JWT_SECRET}
+      USDA_API_KEY: ${USDA_API_KEY}
+      ALLOWED_ORIGINS: https://${DOMAIN}
+
+  frontend:
+    build: ../oltre-frontend
+    container_name: oltre-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      API_URL: https://${DOMAIN}
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: oltre-caddy
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  mysql_data:
+  caddy_data:
+  caddy_config:

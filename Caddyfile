@@ -1,0 +1,14 @@
+{$DOMAIN} {
+	# Backend: everything under /api and the auth endpoints.
+	handle /api/* {
+		reverse_proxy backend:8080
+	}
+	handle /auth/* {
+		reverse_proxy backend:8080
+	}
+
+	# Everything else: the Angular frontend.
+	handle {
+		reverse_proxy frontend:80
+	}
+}
