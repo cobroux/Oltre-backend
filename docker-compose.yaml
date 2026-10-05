@@ -49,6 +49,8 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+    environment:
+      API_URL: ${API_URL:-http://localhost:8080}
     ports:
       - "4200:80"
 
