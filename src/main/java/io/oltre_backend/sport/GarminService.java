@@ -111,7 +111,10 @@ public class GarminService {
         Map<String, SportRecordDTO> otherRecords = new LinkedHashMap<>();
         for (GarminActivityDTO a : activities) {
             String family = sportFamily(a.getSportType());
-            if ("running".equals(family)) continue;
+            // Running has its own distance-bracket records above. Strength
+            // training has no distance/elevation/speed to track, so it
+            // never has anything meaningful to show here.
+            if ("running".equals(family) || "strength".equals(family)) continue;
 
             SportRecordDTO record = otherRecords.computeIfAbsent(family, SportRecordDTO::new);
 
@@ -138,7 +141,13 @@ public class GarminService {
             }
         }
 
-        return new GarminRecordsDTO(computeRunningRecords(runs), otherRecords.values());
+        List<SportRecordDTO> populatedOtherRecords = otherRecords.values().stream()
+                .filter(r -> r.getBestDistanceKm() != null
+                        || r.getBestElevationGainM() != null
+                        || r.getBestAvgSpeedKmh() != null)
+                .toList();
+
+        return new GarminRecordsDTO(computeRunningRecords(runs), populatedOtherRecords);
     }
 
     private List<RunningRecordDTO> computeRunningRecords(List<GarminActivityDTO> runs) {
