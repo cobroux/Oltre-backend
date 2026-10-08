@@ -99,7 +99,11 @@ public class ExpensesService {
             }
 
             case Daily: {
-                newDate = currentDate.plusDays(1);
+                // Une dépense quotidienne qui n'a pas encore démarré doit
+                // afficher son vrai premier prélèvement (startDate), pas
+                // "demain" - sinon on annonce un prélèvement avant même que
+                // la dépense n'ait commencé.
+                newDate = currentDate.isBefore(startDate) ? startDate : currentDate.plusDays(1);
                 return newDate;
             }
 
