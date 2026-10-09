@@ -1,6 +1,5 @@
 package io.oltre_backend.tasks;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -23,15 +22,13 @@ public class TasksService {
 
     public TasksDto toDto(Tasks e) {
 
-            LocalDate today = LocalDate.now();
-
             TasksDto dto = new TasksDto();
             dto.setId(e.getId());
             dto.setTasksName(e.getTasksName());
             dto.setTasksPriority(e.getTasksPriority());
             dto.setTasksStatus(e.getTasksStatus());
             dto.setTasksType(e.getTasksType());
-            dto.setTasksDate(today);
+            dto.setTasksDate(e.getTasksDate());
 
             return dto;
         }
