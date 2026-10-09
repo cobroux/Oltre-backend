@@ -23,7 +23,9 @@ public class MealService {
     private MealDTO toDto(Meal m) {
         return new MealDTO(
                 m.getId(), m.getMealName(), m.getMealDescript(),
-                m.getMealType(), m.getMealDate()
+                m.getMealType(), m.getMealDate(),
+                m.getCalories(), m.getProteinG(), m.getCarbsG(), m.getFatG(),
+                m.getQuantityG(), m.getOffBarcode()
         );
     }
 
@@ -47,6 +49,12 @@ public class MealService {
         meal.setMealDescript(dto.getMealDescript());
         meal.setMealType(dto.getMealType());
         meal.setMealDate(dto.getMealDate() != null ? dto.getMealDate() : LocalDate.now());
+        meal.setCalories(dto.getCalories());
+        meal.setProteinG(dto.getProteinG());
+        meal.setCarbsG(dto.getCarbsG());
+        meal.setFatG(dto.getFatG());
+        meal.setQuantityG(dto.getQuantityG());
+        meal.setOffBarcode(dto.getOffBarcode());
         meal.setUser(userRepository.getReferenceById(userId));
         return toDto(mealRepository.save(meal));
     }
