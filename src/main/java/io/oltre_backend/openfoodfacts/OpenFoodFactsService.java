@@ -1,6 +1,8 @@
 package io.oltre_backend.openfoodfacts;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -13,6 +15,13 @@ import org.springframework.web.client.RestClient;
 public class OpenFoodFactsService {
 
     private static final int MAX_RESULTS = 15;
+    // cgi/search.pl matches on name, brand, categories AND generic_name, then
+    // sorts by popularity (scan count) rather than text relevance - "pate"
+    // surfaces Nutella ("pâte à tartiner" category) above actual pasta
+    // brands. We fetch a wider pool and re-rank it ourselves by how well the
+    // product's own name matches, so the popularity bias doesn't bury the
+    // results that are actually about what was typed.
+    private static final int FETCH_POOL_SIZE = 50;
 
     private final RestClient restClient;
 
@@ -41,14 +50,15 @@ public class OpenFoodFactsService {
                         .queryParam("search_simple", "1")
                         .queryParam("action", "process")
                         .queryParam("json", "1")
-                        .queryParam("page_size", MAX_RESULTS)
+                        .queryParam("page_size", FETCH_POOL_SIZE)
                         .build())
                 .retrieve()
                 .body(SearchResponse.class);
 
         if (response == null || response.products == null) return List.of();
 
-        List<OpenFoodFactsProductDTO> results = new ArrayList<>();
+        String normalizedQuery = normalize(query);
+        List<ScoredProduct> scored = new ArrayList<>();
         for (RawProduct p : response.products) {
             if (p.product_name == null || p.product_name.isBlank()) continue;
             if (p.nutriments == null) continue;
@@ -62,7 +72,7 @@ public class OpenFoodFactsService {
             }
             if (kcal == null) continue;
 
-            results.add(new OpenFoodFactsProductDTO(
+            OpenFoodFactsProductDTO dto = new OpenFoodFactsProductDTO(
                     p.code,
                     p.product_name,
                     p.brands,
@@ -71,11 +81,35 @@ public class OpenFoodFactsService {
                     p.nutriments.proteins_100g,
                     p.nutriments.carbohydrates_100g,
                     p.nutriments.fat_100g
-            ));
-            if (results.size() >= MAX_RESULTS) break;
+            );
+            scored.add(new ScoredProduct(dto, nameMatchScore(normalize(p.product_name), normalizedQuery)));
         }
-        return results;
+
+        return scored.stream()
+                .sorted(Comparator.comparingInt(ScoredProduct::score))
+                .map(ScoredProduct::product)
+                .limit(MAX_RESULTS)
+                .toList();
     }
+
+    // 0 = le nom du produit commence par la recherche, 1 = la recherche
+    // apparaît comme mot entier dans le nom, 2 = simple sous-chaîne, 3 = le
+    // nom ne correspond pas du tout (le match venait d'ailleurs - marque,
+    // catégorie... - on le garde mais tout en bas).
+    int nameMatchScore(String normalizedName, String normalizedQuery) {
+        if (normalizedName.startsWith(normalizedQuery)) return 0;
+        if (normalizedName.matches(".*\\b" + java.util.regex.Pattern.quote(normalizedQuery) + "\\b.*")) return 1;
+        if (normalizedName.contains(normalizedQuery)) return 2;
+        return 3;
+    }
+
+    String normalize(String s) {
+        String withoutAccents = Normalizer.normalize(s, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+        return withoutAccents.toLowerCase();
+    }
+
+    private record ScoredProduct(OpenFoodFactsProductDTO product, int score) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private static class SearchResponse {
