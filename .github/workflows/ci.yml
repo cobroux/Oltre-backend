@@ -1,0 +1,28 @@
+name: CI Backend
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+      # Les tests *RepositoryTest utilisent Testcontainers (MySQL éphémère) -
+      # Docker est disponible nativement sur les runners ubuntu-latest.
+      - name: Run tests
+        run: mvn -B test
+
+      - name: Build
+        run: mvn -B package -DskipTests
