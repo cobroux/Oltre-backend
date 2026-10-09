@@ -8,6 +8,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -20,16 +21,28 @@ public class OpenFoodFactsService {
     // surfaces Nutella ("pâte à tartiner" category) above actual pasta
     // brands. We fetch a wider pool and re-rank it ourselves by how well the
     // product's own name matches, so the popularity bias doesn't bury the
-    // results that are actually about what was typed.
-    private static final int FETCH_POOL_SIZE = 50;
+    // results that are actually about what was typed. Kept modest (rather
+    // than e.g. 50) because cgi/search.pl is already slow on its own, and a
+    // bigger page_size makes it slower still - not worth it for marginal
+    // extra re-ranking quality.
+    private static final int FETCH_POOL_SIZE = 24;
 
     private final RestClient restClient;
 
     public OpenFoodFactsService(
             @Value("${openfoodfacts.base-url}") String baseUrl,
             @Value("${openfoodfacts.user-agent}") String userAgent) {
+        // cgi/search.pl can be genuinely slow (several seconds) - without a
+        // timeout a struggling request just hangs, leaving the "recherche en
+        // cours" spinner stuck indefinitely on the frontend instead of
+        // failing fast into the empty-results fallback.
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(3000);
+        requestFactory.setReadTimeout(5000);
+
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
+                .requestFactory(requestFactory)
                 // OpenFoodFacts asks every integration to identify itself with a
                 // descriptive User-Agent instead of a generic HTTP client string.
                 .defaultHeader("User-Agent", userAgent)
@@ -39,21 +52,28 @@ public class OpenFoodFactsService {
     public List<OpenFoodFactsProductDTO> search(String query) {
         if (query == null || query.isBlank()) return List.of();
 
-        SearchResponse response = restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/cgi/search.pl")
-                        .queryParam("search_terms", query)
-                        // cgi/search.pl is built for the HTML search form's POST,
-                        // not a plain GET query - without these two it silently
-                        // ignores search_terms and the request returns no
-                        // products at all.
-                        .queryParam("search_simple", "1")
-                        .queryParam("action", "process")
-                        .queryParam("json", "1")
-                        .queryParam("page_size", FETCH_POOL_SIZE)
-                        .build())
-                .retrieve()
-                .body(SearchResponse.class);
+        SearchResponse response;
+        try {
+            response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/cgi/search.pl")
+                            .queryParam("search_terms", query)
+                            // cgi/search.pl is built for the HTML search form's POST,
+                            // not a plain GET query - without these two it silently
+                            // ignores search_terms and the request returns no
+                            // products at all.
+                            .queryParam("search_simple", "1")
+                            .queryParam("action", "process")
+                            .queryParam("json", "1")
+                            .queryParam("page_size", FETCH_POOL_SIZE)
+                            .build())
+                    .retrieve()
+                    .body(SearchResponse.class);
+        } catch (Exception e) {
+            // Timeout ou API injoignable : on renvoie une liste vide plutôt
+            // qu'un 500 - le frontend sait déjà traiter "aucun résultat".
+            return List.of();
+        }
 
         if (response == null || response.products == null) return List.of();
 
