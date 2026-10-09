@@ -34,6 +34,12 @@ public class OpenFoodFactsService {
                 .uri(uriBuilder -> uriBuilder
                         .path("/cgi/search.pl")
                         .queryParam("search_terms", query)
+                        // cgi/search.pl is built for the HTML search form's POST,
+                        // not a plain GET query - without these two it silently
+                        // ignores search_terms and the request returns no
+                        // products at all.
+                        .queryParam("search_simple", "1")
+                        .queryParam("action", "process")
                         .queryParam("json", "1")
                         .queryParam("page_size", MAX_RESULTS)
                         .build())
@@ -45,14 +51,23 @@ public class OpenFoodFactsService {
         List<OpenFoodFactsProductDTO> results = new ArrayList<>();
         for (RawProduct p : response.products) {
             if (p.product_name == null || p.product_name.isBlank()) continue;
-            if (p.nutriments == null || p.nutriments.energyKcal100g == null) continue;
+            if (p.nutriments == null) continue;
+
+            // Most products carry energy-kcal_100g directly, but some only
+            // have the legacy energy_100g in kJ - convert rather than drop
+            // the product.
+            Double kcal = p.nutriments.energyKcal100g;
+            if (kcal == null && p.nutriments.energy_100g != null) {
+                kcal = p.nutriments.energy_100g / 4.184;
+            }
+            if (kcal == null) continue;
 
             results.add(new OpenFoodFactsProductDTO(
                     p.code,
                     p.product_name,
                     p.brands,
                     p.image_front_small_url,
-                    p.nutriments.energyKcal100g,
+                    Math.round(kcal * 10) / 10.0,
                     p.nutriments.proteins_100g,
                     p.nutriments.carbohydrates_100g,
                     p.nutriments.fat_100g
@@ -80,6 +95,7 @@ public class OpenFoodFactsService {
     private static class Nutriments {
         @JsonProperty("energy-kcal_100g")
         public Double energyKcal100g;
+        public Double energy_100g;
         public Double proteins_100g;
         public Double carbohydrates_100g;
         public Double fat_100g;
