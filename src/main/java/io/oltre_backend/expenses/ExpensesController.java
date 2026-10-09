@@ -38,6 +38,11 @@ public class ExpensesController {
     }
 
 
+    @GetMapping("/yearRecap")
+    public ExpensesYearRecapDTO getYearRecap() {
+        return expensesService.getYearRecap(CurrentUser.id());
+    }
+
     @GetMapping("/amountPerMonth")
     public Integer getAmountPerMonth() {
 

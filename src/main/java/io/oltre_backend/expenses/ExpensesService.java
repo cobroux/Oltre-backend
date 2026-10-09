@@ -1,6 +1,9 @@
 package io.oltre_backend.expenses;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -112,4 +115,64 @@ public class ExpensesService {
                 return null;
         }
 }
+
+    // Récap "depuis le 1er janvier" : pour chaque dépense active, combien
+    // elle a réellement coûté depuis le début de l'année jusqu'à aujourd'hui
+    // (pas une simple projection du mois en cours comme getAmountPerMonth).
+    public ExpensesYearRecapDTO getYearRecap(Long userId) {
+        return getYearRecap(userId, LocalDate.now());
+    }
+
+    public ExpensesYearRecapDTO getYearRecap(Long userId, LocalDate today) {
+        LocalDate yearStart = LocalDate.of(today.getYear(), 1, 1);
+
+        int monthlyTotal = 0, dailyTotal = 0, yearlyTotal = 0;
+        List<ExpensesYearItemDTO> items = new ArrayList<>();
+
+        for (Expenses e : expensesRepository.findByUser_Id(userId)) {
+            int amountThisYear = switch (e.getRecType()) {
+                case Monthly -> amountForRange(e, yearStart, today, ChronoUnit.MONTHS);
+                case Daily   -> amountForRange(e, yearStart, today, ChronoUnit.DAYS);
+                case Yearly  -> occursThisYear(e, today) ? e.getAmount() : 0;
+            };
+
+            if (amountThisYear <= 0) continue;
+
+            switch (e.getRecType()) {
+                case Monthly -> monthlyTotal += amountThisYear;
+                case Daily   -> dailyTotal += amountThisYear;
+                case Yearly  -> yearlyTotal += amountThisYear;
+            }
+            items.add(new ExpensesYearItemDTO(e.getExpensesName(), e.getRecType(), amountThisYear));
+        }
+
+        items.sort(Comparator.comparing(ExpensesYearItemDTO::getAmountThisYear).reversed());
+
+        return new ExpensesYearRecapDTO(monthlyTotal + dailyTotal + yearlyTotal, monthlyTotal, dailyTotal, yearlyTotal, items);
+    }
+
+    // Nombre d'occurrences (mois ou jours, selon `unit`) entre le début de
+    // l'année et aujourd'hui pendant lesquelles la dépense était active,
+    // bornée par sa propre startDate/endDate.
+    private int amountForRange(Expenses e, LocalDate yearStart, LocalDate today, ChronoUnit unit) {
+        LocalDate start = e.getStartDate().isAfter(yearStart) ? e.getStartDate() : yearStart;
+        LocalDate end = (e.getEndDate() != null && e.getEndDate().isBefore(today)) ? e.getEndDate() : today;
+        if (end.isBefore(start)) return 0;
+
+        long count = unit == ChronoUnit.MONTHS
+                ? ChronoUnit.MONTHS.between(start.withDayOfMonth(1), end.withDayOfMonth(1)) + 1
+                : ChronoUnit.DAYS.between(start, end) + 1;
+
+        return (int) (e.getAmount() * count);
+    }
+
+    // Une dépense annuelle ne compte que si son anniversaire (mois/jour de
+    // startDate, cette année) est déjà passé et que la dépense était encore
+    // active à ce moment-là.
+    private boolean occursThisYear(Expenses e, LocalDate today) {
+        if (e.getStartDate().getYear() > today.getYear()) return false;
+        LocalDate anniversary = LocalDate.of(today.getYear(), e.getStartDate().getMonth(), e.getStartDate().getDayOfMonth());
+        if (anniversary.isAfter(today)) return false;
+        return e.getEndDate() == null || !e.getEndDate().isBefore(anniversary);
+    }
 }
