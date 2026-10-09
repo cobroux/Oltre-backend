@@ -30,6 +30,7 @@ public class ExpensesService {
         dto.setAmount(e.getAmount());
         dto.setRecType(e.getRecType());
         dto.setStartDate(e.getStartDate());
+        dto.setEndDate(e.getEndDate());
 
         dto.setNextPaymentDate(
             computeNextPaymentDate(dto, today)
