@@ -71,7 +71,7 @@ public class ExpensesService {
     public LocalDate computeNextPaymentDate(ExpensesDto e, LocalDate today) {
 
     LocalDate startDate = e.getStartDate();
-    LocalDate currentDate  = LocalDate.now();
+    LocalDate currentDate  = today;
     LocalDate newDate;
 
         switch (e.getRecType()) {
