@@ -47,18 +47,16 @@ public class ExpensesController {
         LocalDate currentDate = LocalDate.now();
         
         for(ExpensesDto e : expenses){
-            System.out.println("ex "+ e.getExpensesName());
-            if(currentDate.isBefore(e.getStartDate())){
+            // Seules les dépenses déjà démarrées (startDate <= aujourd'hui)
+            // comptent dans le total du mois - le test était inversé et ne
+            // comptait que celles dont la date de début est dans le futur.
+            if(!currentDate.isBefore(e.getStartDate())){
                  switch(e.getRecType()){
-                    case RecType.Monthly : 
+                    case RecType.Monthly :
                         amount+=e.getAmount();
-                        System.out.println("m amount "+ amount);
-
                         break;
-                    case RecType.Daily : 
+                    case RecType.Daily :
                         amount+=(e.getAmount()*currentDate.lengthOfMonth());
-                                                System.out.println("d amount "+ amount);
-
                         break;
                     case RecType.Yearly :
                         if(currentDate.getMonth() == e.getStartDate().getMonth()){
@@ -82,7 +80,7 @@ public class ExpensesController {
             dto.getAmount(),
             dto.getRecType(), // recType
             dto.getStartDate(),
-            null  // endDate
+            dto.getEndDate()
         );
         return expensesService.saveExpenses(expenses, CurrentUser.id());
     }
