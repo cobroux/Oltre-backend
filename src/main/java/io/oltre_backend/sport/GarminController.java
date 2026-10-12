@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +18,11 @@ import io.oltre_backend.auth.CurrentUser;
 
 @RestController
 @RequestMapping("/api/garmin")
-@CrossOrigin(origins = "http://localhost:4200")
+// Pas de @CrossOrigin ici : l'annotation écrasait la politique CORS globale
+// (SecurityConfig, basée sur ALLOWED_ORIGINS) avec un localhost:4200 figé en
+// dur, ce qui aurait bloqué le vrai frontend en production tout en gardant
+// un accès cross-origin ouvert depuis n'importe quel build local du
+// frontend. Hérite maintenant de la même politique que le reste de l'API.
 public class GarminController {
 
     private final GarminService garminService;

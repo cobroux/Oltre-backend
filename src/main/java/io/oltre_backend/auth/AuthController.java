@@ -13,6 +13,13 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
 
+    // Hash BCrypt factice utilisé pour égaliser le temps de réponse de
+    // /login quand l'email n'existe pas (voir le commentaire dans login()).
+    // N'importe quel hash BCrypt valide convient - celui-ci ne correspond à
+    // aucun mot de passe réel.
+    private static final String DUMMY_PASSWORD_HASH =
+            "$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5L5FAUyqnBAjQexwF.7a0vtlUiQ9q";
+
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
@@ -42,7 +49,16 @@ public class AuthController {
 
         User user = userRepository.findByEmail(request.email());
 
-        if (user == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
+        // Toujours passer par passwordEncoder.matches, même quand l'email
+        // n'existe pas (contre un hash factice) : sinon la branche
+        // user == null retourne quasi instantanément alors qu'un mauvais mot
+        // de passe prend le temps du calcul BCrypt, ce qui permet de
+        // deviner quels emails sont inscrits en mesurant le temps de
+        // réponse.
+        String hashToCheck = user != null ? user.getPassword() : DUMMY_PASSWORD_HASH;
+        boolean passwordMatches = passwordEncoder.matches(request.password(), hashToCheck);
+
+        if (user == null || !passwordMatches) {
             loginAttemptService.recordFailure(request.email());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Email ou mot de passe incorrect"));

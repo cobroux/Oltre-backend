@@ -33,6 +33,12 @@ services:
       GARMIN_SERVICE_TOKEN: ${GARMIN_SERVICE_TOKEN}
       JWT_SECRET: ${JWT_SECRET}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:4200}
+      # Laissé vide par défaut (Coach IA reste inactif, 503 clair) -
+      # ANTHROPIC_MODEL n'est volontairement pas passé ici : le fournir avec
+      # une valeur vide écraserait le défaut applicatif dans
+      # application.properties. Pour changer de modèle, ajoute la variable
+      # ici toi-même une fois que tu as une clé.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
       - "8080:8080"
 
