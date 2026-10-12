@@ -9,7 +9,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
@@ -27,16 +26,19 @@ public class CoachPlan {
     @Column(name = "generated_at", nullable = false)
     private LocalDateTime generatedAt;
 
-    @Lob
-    @Column(name = "analysis", nullable = false)
+    // columnDefinition explicite plutôt que @Lob seul : selon la version
+    // d'Hibernate/le dialecte, @Lob sur un String peut se traduire en une
+    // colonne bien plus petite que prévu (VARCHAR(255) observé en
+    // production), ce qui fait planter l'insert dès qu'une analyse dépasse
+    // 255 caractères - systématique avec un texte généré par l'IA.
+    @Column(name = "analysis", nullable = false, columnDefinition = "LONGTEXT")
     private String analysis;
 
     // Sérialisé en JSON (liste de 7 PlanDayDTO) plutôt qu'une table à part :
     // pas besoin d'interroger les jours individuellement côté base, et ça
     // évite une table de plus pour une donnée qui n'est jamais lue que dans
     // son ensemble.
-    @Lob
-    @Column(name = "days_json", nullable = false)
+    @Column(name = "days_json", nullable = false, columnDefinition = "LONGTEXT")
     private String daysJson;
 
     @OneToOne
