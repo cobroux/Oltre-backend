@@ -45,6 +45,18 @@ public class appointment {
     @Column(name = "appt_type")
     private appointmentType apptType;
 
+    // D'où vient ce rendez-vous (voir AppointmentSource) - permet de
+    // synchroniser les activités Garmin et le plan du Coach IA dans le
+    // calendrier sans créer de doublons à chaque rafraîchissement : on
+    // retrouve l'entrée existante via (user, source, sourceRef) et on la met
+    // à jour plutôt que d'en recréer une.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source", nullable = false)
+    private AppointmentSource source = AppointmentSource.MANUAL;
+
+    @Column(name = "source_ref")
+    private String sourceRef;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
@@ -118,4 +130,12 @@ public class appointment {
     public User getUser() { return user; }
 
     public void setUser(User user) { this.user = user; }
+
+    public AppointmentSource getSource() { return source; }
+
+    public void setSource(AppointmentSource source) { this.source = source; }
+
+    public String getSourceRef() { return sourceRef; }
+
+    public void setSourceRef(String sourceRef) { this.sourceRef = sourceRef; }
 }
