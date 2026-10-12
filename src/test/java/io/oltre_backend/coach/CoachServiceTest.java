@@ -22,10 +22,10 @@ class CoachServiceTest {
     private final CoachPlanRepository coachPlanRepository = mock(CoachPlanRepository.class);
     private final UserRepository userRepository = mock(UserRepository.class);
     private final GarminService garminService = mock(GarminService.class);
-    private final AnthropicService anthropicService = mock(AnthropicService.class);
+    private final GeminiService geminiService = mock(GeminiService.class);
 
     private final CoachService service = new CoachService(
-            sportGoalRepository, coachPlanRepository, userRepository, garminService, anthropicService);
+            sportGoalRepository, coachPlanRepository, userRepository, garminService, geminiService);
 
     private static final Long USER_ID = 1L;
 
@@ -47,7 +47,7 @@ class CoachServiceTest {
         when(garminService.getActivities(anyLong(), any(), anyInt())).thenReturn(List.of());
         when(coachPlanRepository.findByUser_Id(USER_ID)).thenReturn(Optional.empty());
         when(userRepository.getReferenceById(USER_ID)).thenReturn(null);
-        when(anthropicService.complete(any(), any())).thenReturn(VALID_JSON);
+        when(geminiService.complete(any(), any())).thenReturn(VALID_JSON);
 
         CoachPlanDTO result = service.generatePlan(USER_ID);
 
@@ -76,7 +76,7 @@ class CoachServiceTest {
         when(garminService.getActivities(anyLong(), any(), anyInt())).thenReturn(List.of());
         when(coachPlanRepository.findByUser_Id(USER_ID)).thenReturn(Optional.empty());
         when(userRepository.getReferenceById(USER_ID)).thenReturn(null);
-        when(anthropicService.complete(any(), any())).thenReturn(missingWednesday);
+        when(geminiService.complete(any(), any())).thenReturn(missingWednesday);
 
         CoachPlanDTO result = service.generatePlan(USER_ID);
 
@@ -87,20 +87,20 @@ class CoachServiceTest {
     }
 
     @Test
-    void generatePlan_whenAnthropicNotConfigured_propagatesException() {
+    void generatePlan_whenGeminiNotConfigured_propagatesException() {
         when(sportGoalRepository.findByUser_IdOrderByEventDateAsc(USER_ID)).thenReturn(List.of());
         when(garminService.getActivities(anyLong(), any(), anyInt())).thenReturn(List.of());
-        when(anthropicService.complete(any(), any()))
-                .thenThrow(new AnthropicNotConfiguredException("pas de clé"));
+        when(geminiService.complete(any(), any()))
+                .thenThrow(new CoachAiNotConfiguredException("pas de clé"));
 
-        assertThrows(AnthropicNotConfiguredException.class, () -> service.generatePlan(USER_ID));
+        assertThrows(CoachAiNotConfiguredException.class, () -> service.generatePlan(USER_ID));
     }
 
     @Test
     void generatePlan_whenResponseIsNotValidJson_throwsCoachGenerationException() {
         when(sportGoalRepository.findByUser_IdOrderByEventDateAsc(USER_ID)).thenReturn(List.of());
         when(garminService.getActivities(anyLong(), any(), anyInt())).thenReturn(List.of());
-        when(anthropicService.complete(any(), any())).thenReturn("ceci n'est pas du JSON");
+        when(geminiService.complete(any(), any())).thenReturn("ceci n'est pas du JSON");
 
         assertThrows(CoachGenerationException.class, () -> service.generatePlan(USER_ID));
     }
