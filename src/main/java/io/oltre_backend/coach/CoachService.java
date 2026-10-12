@@ -27,7 +27,7 @@ public class CoachService {
     private final CoachPlanRepository coachPlanRepository;
     private final UserRepository userRepository;
     private final GarminService garminService;
-    private final AnthropicService anthropicService;
+    private final GeminiService geminiService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public CoachService(
@@ -35,12 +35,12 @@ public class CoachService {
             CoachPlanRepository coachPlanRepository,
             UserRepository userRepository,
             GarminService garminService,
-            AnthropicService anthropicService) {
+            GeminiService geminiService) {
         this.sportGoalRepository = sportGoalRepository;
         this.coachPlanRepository = coachPlanRepository;
         this.userRepository = userRepository;
         this.garminService = garminService;
-        this.anthropicService = anthropicService;
+        this.geminiService = geminiService;
     }
 
     // ── Objectifs ─────────────────────────────────────────
@@ -89,7 +89,7 @@ public class CoachService {
 
         String userPrompt = buildUserPrompt(goals, recentActivities);
 
-        String raw = anthropicService.complete(systemPrompt, userPrompt);
+        String raw = geminiService.complete(systemPrompt, userPrompt);
         GeneratedPlan generated = parseGeneratedPlan(raw);
 
         CoachPlan plan = coachPlanRepository.findByUser_Id(userId).orElseGet(() -> {
