@@ -43,6 +43,12 @@ public class ExpensesController {
         return expensesService.getYearRecap(CurrentUser.id());
     }
 
+    @GetMapping("/monthlyTrend")
+    public ExpensesMonthlyTrendDTO getMonthlyTrend() {
+        LocalDate today = LocalDate.now();
+        return new ExpensesMonthlyTrendDTO(today.getYear(), today.getMonthValue(), expensesService.getMonthlyTrend(CurrentUser.id(), today));
+    }
+
     @GetMapping("/amountPerMonth")
     public Integer getAmountPerMonth() {
 
