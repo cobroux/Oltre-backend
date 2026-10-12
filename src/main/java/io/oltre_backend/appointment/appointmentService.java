@@ -22,7 +22,8 @@ public class appointmentService {
 
     private appointmentDTO toDto(appointment a) {
         return new appointmentDTO(a.getId(), a.getTitle(), a.getDescription(),
-                a.getLocation(), a.getApptDate(), a.getApptTime(), a.getApptEndTime(), a.getApptType());
+                a.getLocation(), a.getApptDate(), a.getApptTime(), a.getApptEndTime(), a.getApptType(),
+                a.getSource());
     }
 
     public List<appointmentDTO> getWeek(LocalDate monday, Long userId) {
@@ -77,5 +78,78 @@ public class appointmentService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
         repo.deleteById(id);
+    }
+
+    // Édition manuelle d'un rendez-vous existant. Un rendez-vous généré
+    // automatiquement (Garmin/Coach IA) repasse en MANUAL dès qu'il est édité
+    // ici : une fois modifié par l'utilisateur, c'est devenu "son" rendez-vous
+    // et une future synchronisation ne doit plus l'écraser.
+    public appointmentDTO update(Long id, Long userId, appointmentDTO dto) {
+        appointment a = repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (a.getUser() == null || !a.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        if (dto.getApptTime() != null && dto.getApptEndTime() != null
+                && !dto.getApptEndTime().isAfter(dto.getApptTime())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "End time must be after start time");
+        }
+        if (dto.getApptTime() != null) {
+            boolean overlaps = repo.findByApptDateAndUser_Id(dto.getApptDate(), userId).stream()
+                    .filter(existing -> !existing.getId().equals(id))
+                    .anyMatch(existing -> overlaps(
+                            dto.getApptTime(), dto.getApptEndTime(),
+                            existing.getApptTime(), existing.getApptEndTime()));
+            if (overlaps) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "This appointment overlaps with an existing one");
+            }
+        }
+
+        a.setTitle(dto.getTitle());
+        a.setDescription(dto.getDescription());
+        a.setLocation(dto.getLocation());
+        a.setApptDate(dto.getApptDate());
+        a.setApptTime(dto.getApptTime());
+        a.setApptEndTime(dto.getApptEndTime());
+        a.setApptType(dto.getApptType());
+        a.setSource(AppointmentSource.MANUAL);
+        a.setSourceRef(null);
+        return toDto(repo.save(a));
+    }
+
+    // Crée ou met à jour un rendez-vous généré automatiquement, identifié de
+    // façon stable par (userId, source, sourceRef) - appelé à chaque
+    // synchronisation des activités Garmin et à chaque génération du plan du
+    // Coach IA. Pas de contrôle de chevauchement ici : ce sont des entrées
+    // informatives (un fait passé ou une suggestion), pas des créneaux que
+    // l'utilisateur bloque volontairement.
+    public void upsertFromSource(Long userId, String title, String description, LocalDate apptDate,
+                                  LocalTime apptTime, AppointmentSource source, String sourceRef) {
+        appointment a = repo.findByUser_IdAndSourceAndSourceRef(userId, source, sourceRef)
+                .orElseGet(() -> {
+                    appointment created = new appointment();
+                    created.setUser(userRepository.getReferenceById(userId));
+                    created.setSource(source);
+                    created.setSourceRef(sourceRef);
+                    created.setApptType(appointmentType.SPORT);
+                    return created;
+                });
+        a.setTitle(title);
+        a.setDescription(description);
+        a.setApptDate(apptDate);
+        a.setApptTime(apptTime);
+        repo.save(a);
+    }
+
+    // Retire les entrées auto-générées d'une source pour une semaine donnée -
+    // utilisé avant de réinjecter le plan du Coach IA, pour qu'une
+    // régénération qui change un jour (ex: séance retirée) ne laisse pas une
+    // entrée périmée dans le calendrier. Les rendez-vous que l'utilisateur a
+    // édités entre-temps sont déjà repassés en MANUAL (voir update()) et ne
+    // sont donc jamais touchés ici.
+    public void deleteBySourceForWeek(Long userId, AppointmentSource source, LocalDate weekStart, LocalDate weekEnd) {
+        repo.deleteAll(repo.findByUser_IdAndSourceAndApptDateBetween(userId, source, weekStart, weekEnd));
     }
 }

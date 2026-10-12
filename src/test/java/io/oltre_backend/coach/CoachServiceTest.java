@@ -9,10 +9,14 @@ import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.oltre_backend.appointment.AppointmentSource;
 import io.oltre_backend.sport.GarminService;
 import io.oltre_backend.user.UserRepository;
 
@@ -23,9 +27,11 @@ class CoachServiceTest {
     private final UserRepository userRepository = mock(UserRepository.class);
     private final GarminService garminService = mock(GarminService.class);
     private final GeminiService geminiService = mock(GeminiService.class);
+    private final io.oltre_backend.appointment.appointmentService appointmentService =
+            mock(io.oltre_backend.appointment.appointmentService.class);
 
     private final CoachService service = new CoachService(
-            sportGoalRepository, coachPlanRepository, userRepository, garminService, geminiService);
+            sportGoalRepository, coachPlanRepository, userRepository, garminService, geminiService, appointmentService);
 
     private static final Long USER_ID = 1L;
 
@@ -58,6 +64,14 @@ class CoachServiceTest {
         assertEquals("Run", result.getDays().get(1).getType());
         assertEquals(8.0, result.getDays().get(1).getDistanceKm());
         verify(coachPlanRepository).save(any(CoachPlan.class));
+
+        // 4 jours avec séance (Mardi, Jeudi, Samedi) + rien pour les jours de
+        // repos, et une purge préalable des anciennes entrées COACH_PLAN de
+        // la semaine avant de les recréer.
+        verify(appointmentService).deleteBySourceForWeek(eq(USER_ID), eq(AppointmentSource.COACH_PLAN), any(), any());
+        verify(appointmentService, times(3)).upsertFromSource(
+                eq(USER_ID), any(), any(), any(), eq(null), eq(AppointmentSource.COACH_PLAN), any());
+        verify(appointmentService, never()).upsertFromSource(any(), eq("Repos"), any(), any(), any(), any(), any());
     }
 
     @Test

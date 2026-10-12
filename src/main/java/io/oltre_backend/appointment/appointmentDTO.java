@@ -14,11 +14,13 @@ public class appointmentDTO {
     private LocalTime apptTime;
     private LocalTime apptEndTime;
     private appointmentType apptType;
+    private AppointmentSource source;
 
     public appointmentDTO() {}
 
     public appointmentDTO(Long id, String title, String description, String location,
-                          LocalDate apptDate, LocalTime apptTime, LocalTime apptEndTime, appointmentType apptType) {
+                          LocalDate apptDate, LocalTime apptTime, LocalTime apptEndTime, appointmentType apptType,
+                          AppointmentSource source) {
         this.id = id; this.title = title;
         this.description = description;
         this.location = location;
@@ -26,6 +28,7 @@ public class appointmentDTO {
         this.apptTime = apptTime;
         this.apptEndTime = apptEndTime;
         this.apptType = apptType;
+        this.source = source;
     }
 
     public Long getId() { 
@@ -88,7 +91,15 @@ public class appointmentDTO {
         return apptType; 
     }
     
-    public void setApptType(appointmentType apptType) { 
-        this.apptType = apptType; 
+    public void setApptType(appointmentType apptType) {
+        this.apptType = apptType;
+    }
+
+    public AppointmentSource getSource() {
+        return source;
+    }
+
+    public void setSource(AppointmentSource source) {
+        this.source = source;
     }
 }

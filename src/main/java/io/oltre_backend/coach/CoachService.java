@@ -1,9 +1,11 @@
 package io.oltre_backend.coach;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -12,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import io.oltre_backend.appointment.AppointmentSource;
+import io.oltre_backend.appointment.appointmentService;
 import io.oltre_backend.sport.GarminActivityDTO;
 import io.oltre_backend.sport.GarminAuthException;
 import io.oltre_backend.sport.GarminService;
@@ -28,6 +32,7 @@ public class CoachService {
     private final UserRepository userRepository;
     private final GarminService garminService;
     private final GeminiService geminiService;
+    private final appointmentService appointmentService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public CoachService(
@@ -35,12 +40,14 @@ public class CoachService {
             CoachPlanRepository coachPlanRepository,
             UserRepository userRepository,
             GarminService garminService,
-            GeminiService geminiService) {
+            GeminiService geminiService,
+            appointmentService appointmentService) {
         this.sportGoalRepository = sportGoalRepository;
         this.coachPlanRepository = coachPlanRepository;
         this.userRepository = userRepository;
         this.garminService = garminService;
         this.geminiService = geminiService;
+        this.appointmentService = appointmentService;
     }
 
     // ── Objectifs ─────────────────────────────────────────
@@ -99,10 +106,40 @@ public class CoachService {
         });
         plan.setGeneratedAt(LocalDateTime.now());
         plan.setAnalysis(generated.analysis);
-        plan.setDaysJson(writeDaysJson(normalizeDays(generated.days)));
+        List<PlanDayDTO> days = normalizeDays(generated.days);
+        plan.setDaysJson(writeDaysJson(days));
         coachPlanRepository.save(plan);
 
+        syncPlanToCalendar(userId, days);
+
         return toDto(plan);
+    }
+
+    // Reflète le plan dans le calendrier : une entrée par jour avec séance
+    // (les jours "Repos" ne créent rien, pour ne pas l'encombrer). On
+    // commence par retirer les entrées COACH_PLAN déjà présentes sur cette
+    // semaine avant de réinsérer, pour qu'une régénération qui change ou
+    // retire une séance ne laisse pas une entrée périmée - les entrées que
+    // l'utilisateur a éditées entre-temps sont déjà passées en MANUAL
+    // (appointmentService.update) et ne sont donc jamais supprimées ici.
+    private void syncPlanToCalendar(Long userId, List<PlanDayDTO> days) {
+        LocalDate nextMonday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.MONDAY));
+        LocalDate weekEnd = nextMonday.plusDays(6);
+
+        appointmentService.deleteBySourceForWeek(userId, AppointmentSource.COACH_PLAN, nextMonday, weekEnd);
+
+        for (int i = 0; i < days.size(); i++) {
+            PlanDayDTO day = days.get(i);
+            if ("Rest".equals(day.getType())) continue;
+
+            LocalDate date = nextMonday.plusDays(i);
+            String description = day.getDistanceKm() != null
+                    ? String.format("Suggestion du Coach IA · %.1f km", day.getDistanceKm())
+                    : "Suggestion du Coach IA";
+            appointmentService.upsertFromSource(
+                    userId, day.getLabel(), description, date, null,
+                    AppointmentSource.COACH_PLAN, date.toString());
+        }
     }
 
     public CoachPlanDTO toggleDay(Long userId, int dayIndex) {
