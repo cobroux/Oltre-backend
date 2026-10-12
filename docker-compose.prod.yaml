@@ -43,6 +43,11 @@ services:
       GARMIN_SERVICE_TOKEN: ${GARMIN_SERVICE_TOKEN}
       JWT_SECRET: ${JWT_SECRET}
       ALLOWED_ORIGINS: https://${DOMAIN}
+      # Laissé vide par défaut (Coach IA reste inactif, 503 clair).
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Swagger/OpenAPI public par défaut - couper l'exposition de la
+      # surface d'API en production tant que rien ne l'exige réellement.
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
 
   frontend:
     build: ../oltre-frontend
