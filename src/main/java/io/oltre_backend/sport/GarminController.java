@@ -26,9 +26,11 @@ import io.oltre_backend.auth.CurrentUser;
 public class GarminController {
 
     private final GarminService garminService;
+    private final GarminCalendarSyncService calendarSyncService;
 
-    public GarminController(GarminService garminService) {
+    public GarminController(GarminService garminService, GarminCalendarSyncService calendarSyncService) {
         this.garminService = garminService;
+        this.calendarSyncService = calendarSyncService;
     }
 
     @PostMapping("/connect")
@@ -52,7 +54,12 @@ public class GarminController {
     public List<GarminActivityDTO> getActivities(
             @RequestParam(required = false) String monday,
             @RequestParam(defaultValue = "50") int limit) {
-        return garminService.getActivities(CurrentUser.id(), monday, limit);
+        List<GarminActivityDTO> activities = garminService.getActivities(CurrentUser.id(), monday, limit);
+        // Remplit le calendrier au passage (idempotent, voir
+        // GarminCalendarSyncService) - pas de synchro séparée à déclencher,
+        // ça se fait à chaque fois que la page Sport charge des activités.
+        calendarSyncService.sync(CurrentUser.id(), activities);
+        return activities;
     }
 
     @GetMapping("/records")
