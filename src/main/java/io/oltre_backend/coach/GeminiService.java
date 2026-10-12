@@ -55,7 +55,17 @@ public class GeminiService {
                     .body(Map.of(
                             "systemInstruction", Map.of("parts", List.of(Map.of("text", systemPrompt))),
                             "contents", List.of(Map.of("role", "user", "parts", List.of(Map.of("text", userPrompt)))),
-                            "generationConfig", Map.of("maxOutputTokens", 1500)
+                            // responseMimeType force une sortie JSON stricte (pas de prose
+                            // ni de ```fences``` autour) - sans ça Gemini respecte la
+                            // consigne "JSON only" de façon moins fiable que Claude, d'où
+                            // des parsings qui échouaient en pratique. maxOutputTokens monté
+                            // à 2048 : les modèles "flash" récents consomment une partie du
+                            // budget en réflexion interne avant la réponse visible, donc
+                            // 1500 pouvait couper le JSON en plein milieu.
+                            "generationConfig", Map.of(
+                                    "maxOutputTokens", 2048,
+                                    "responseMimeType", "application/json"
+                            )
                     ))
                     .retrieve()
                     .body(GenerateContentResponse.class);
