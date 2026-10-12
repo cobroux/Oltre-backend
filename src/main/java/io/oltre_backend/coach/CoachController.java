@@ -57,8 +57,8 @@ public class CoachController {
         return coachService.toggleDay(CurrentUser.id(), index);
     }
 
-    @ExceptionHandler(AnthropicNotConfiguredException.class)
-    public ResponseEntity<Map<String, String>> handleNotConfigured(AnthropicNotConfiguredException e) {
+    @ExceptionHandler(CoachAiNotConfiguredException.class)
+    public ResponseEntity<Map<String, String>> handleNotConfigured(CoachAiNotConfiguredException e) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", e.getMessage()));
     }
 
