@@ -180,4 +180,39 @@ public class ExpensesService {
         LocalDate anniversary = LocalDate.of(yearEnd.getYear(), e.getStartDate().getMonth(), e.getStartDate().getDayOfMonth());
         return e.getEndDate() == null || !e.getEndDate().isBefore(anniversary);
     }
+
+    // Tendance mensuelle : même projection que getYearRecap, mais répartie
+    // mois par mois (Monthly/Daily comptés dans chaque mois où ils sont
+    // actifs, Yearly compté en bloc dans son mois anniversaire).
+    public List<Integer> getMonthlyTrend(Long userId) {
+        return getMonthlyTrend(userId, LocalDate.now());
+    }
+
+    public List<Integer> getMonthlyTrend(Long userId, LocalDate today) {
+        int year = today.getYear();
+        int[] totals = new int[12];
+        LocalDate yearEnd = LocalDate.of(year, 12, 31);
+
+        for (Expenses e : expensesRepository.findByUser_Id(userId)) {
+            switch (e.getRecType()) {
+                case Monthly, Daily -> {
+                    ChronoUnit unit = e.getRecType() == RecType.Monthly ? ChronoUnit.MONTHS : ChronoUnit.DAYS;
+                    for (int m = 1; m <= 12; m++) {
+                        LocalDate monthStart = LocalDate.of(year, m, 1);
+                        LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
+                        totals[m - 1] += amountForRange(e, monthStart, monthEnd, unit);
+                    }
+                }
+                case Yearly -> {
+                    if (occursThisYear(e, yearEnd)) {
+                        totals[e.getStartDate().getMonthValue() - 1] += e.getAmount();
+                    }
+                }
+            }
+        }
+
+        List<Integer> amounts = new ArrayList<>(12);
+        for (int t : totals) amounts.add(t);
+        return amounts;
+    }
 }
