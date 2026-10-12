@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class GeminiService {
     private final String apiKey;
     private final String model;
     private final RestClient restClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public GeminiService(
             @Value("${gemini.api-key}") String apiKey,
@@ -48,7 +50,14 @@ public class GeminiService {
 
         GenerateContentResponse response;
         try {
-            response = restClient.post()
+            // .body(String.class) plutôt que .body(GenerateContentResponse.class) :
+            // l'API Gemini répond parfois avec un Content-Type
+            // "application/octet-stream" au lieu d'"application/json" (observé en
+            // production), ce qui fait échouer la désérialisation automatique de
+            // RestClient (elle choisit son convertisseur d'après le Content-Type
+            // déclaré, pas le contenu réel). Récupérer une String fonctionne quel
+            // que soit le Content-Type, puis on parse nous-mêmes.
+            String raw = restClient.post()
                     .uri("/v1beta/models/{model}:generateContent", model)
                     .header("x-goog-api-key", apiKey)
                     .header("content-type", "application/json")
@@ -68,7 +77,8 @@ public class GeminiService {
                             )
                     ))
                     .retrieve()
-                    .body(GenerateContentResponse.class);
+                    .body(String.class);
+            response = raw == null ? null : objectMapper.readValue(raw, GenerateContentResponse.class);
         } catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
             throw new CoachGenerationException("Clé API Gemini invalide ou expirée.");
         } catch (Exception e) {
