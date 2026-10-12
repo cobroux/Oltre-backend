@@ -116,24 +116,30 @@ public class ExpensesService {
         }
 }
 
-    // Récap "depuis le 1er janvier" : pour chaque dépense active, combien
-    // elle a réellement coûté depuis le début de l'année jusqu'à aujourd'hui
-    // (pas une simple projection du mois en cours comme getAmountPerMonth).
+    // Récap "pour l'année en cours" : pour chaque dépense active, son coût
+    // projeté sur l'année entière (1er janvier -> 31 décembre), bornée par
+    // sa propre startDate/endDate si elles tombent dans l'année. On ne
+    // borne PAS par "aujourd'hui" - une dépense annuelle dont la date de
+    // départ tombe plus tard dans l'année compte quand même, sinon elle
+    // disparaît purement et simplement du total tant que son anniversaire
+    // n'est pas encore passé (bug réel : une dépense "Annuel" démarrant en
+    // novembre n'apparaissait nulle part avant octobre).
     public ExpensesYearRecapDTO getYearRecap(Long userId) {
         return getYearRecap(userId, LocalDate.now());
     }
 
     public ExpensesYearRecapDTO getYearRecap(Long userId, LocalDate today) {
         LocalDate yearStart = LocalDate.of(today.getYear(), 1, 1);
+        LocalDate yearEnd = LocalDate.of(today.getYear(), 12, 31);
 
         int monthlyTotal = 0, dailyTotal = 0, yearlyTotal = 0;
         List<ExpensesYearItemDTO> items = new ArrayList<>();
 
         for (Expenses e : expensesRepository.findByUser_Id(userId)) {
             int amountThisYear = switch (e.getRecType()) {
-                case Monthly -> amountForRange(e, yearStart, today, ChronoUnit.MONTHS);
-                case Daily   -> amountForRange(e, yearStart, today, ChronoUnit.DAYS);
-                case Yearly  -> occursThisYear(e, today) ? e.getAmount() : 0;
+                case Monthly -> amountForRange(e, yearStart, yearEnd, ChronoUnit.MONTHS);
+                case Daily   -> amountForRange(e, yearStart, yearEnd, ChronoUnit.DAYS);
+                case Yearly  -> occursThisYear(e, yearEnd) ? e.getAmount() : 0;
             };
 
             if (amountThisYear <= 0) continue;
@@ -151,12 +157,12 @@ public class ExpensesService {
         return new ExpensesYearRecapDTO(monthlyTotal + dailyTotal + yearlyTotal, monthlyTotal, dailyTotal, yearlyTotal, items);
     }
 
-    // Nombre d'occurrences (mois ou jours, selon `unit`) entre le début de
-    // l'année et aujourd'hui pendant lesquelles la dépense était active,
+    // Nombre d'occurrences (mois ou jours, selon `unit`) entre le début et
+    // la fin de l'année pendant lesquelles la dépense était/sera active,
     // bornée par sa propre startDate/endDate.
-    private int amountForRange(Expenses e, LocalDate yearStart, LocalDate today, ChronoUnit unit) {
+    private int amountForRange(Expenses e, LocalDate yearStart, LocalDate yearEnd, ChronoUnit unit) {
         LocalDate start = e.getStartDate().isAfter(yearStart) ? e.getStartDate() : yearStart;
-        LocalDate end = (e.getEndDate() != null && e.getEndDate().isBefore(today)) ? e.getEndDate() : today;
+        LocalDate end = (e.getEndDate() != null && e.getEndDate().isBefore(yearEnd)) ? e.getEndDate() : yearEnd;
         if (end.isBefore(start)) return 0;
 
         long count = unit == ChronoUnit.MONTHS
@@ -166,13 +172,12 @@ public class ExpensesService {
         return (int) (e.getAmount() * count);
     }
 
-    // Une dépense annuelle ne compte que si son anniversaire (mois/jour de
-    // startDate, cette année) est déjà passé et que la dépense était encore
-    // active à ce moment-là.
-    private boolean occursThisYear(Expenses e, LocalDate today) {
-        if (e.getStartDate().getYear() > today.getYear()) return false;
-        LocalDate anniversary = LocalDate.of(today.getYear(), e.getStartDate().getMonth(), e.getStartDate().getDayOfMonth());
-        if (anniversary.isAfter(today)) return false;
+    // Une dépense annuelle compte dès lors que son anniversaire (mois/jour
+    // de startDate) tombe dans l'année en cours, qu'il soit déjà passé ou
+    // encore à venir - c'est une projection sur l'année, pas un "déjà payé".
+    private boolean occursThisYear(Expenses e, LocalDate yearEnd) {
+        if (e.getStartDate().getYear() > yearEnd.getYear()) return false;
+        LocalDate anniversary = LocalDate.of(yearEnd.getYear(), e.getStartDate().getMonth(), e.getStartDate().getDayOfMonth());
         return e.getEndDate() == null || !e.getEndDate().isBefore(anniversary);
     }
 }
