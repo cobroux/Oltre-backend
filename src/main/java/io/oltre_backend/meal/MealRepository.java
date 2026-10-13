@@ -12,4 +12,6 @@ public interface MealRepository extends JpaRepository<Meal, Long> {
 
     // Repas entre deux dates (pour la vue semaine)
     List<Meal> findByMealDateBetweenAndUser_Id(LocalDate start, LocalDate end, Long userId);
+
+    void deleteByUser_Id(Long userId);
 }

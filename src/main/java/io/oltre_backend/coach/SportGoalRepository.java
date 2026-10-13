@@ -10,4 +10,6 @@ public interface SportGoalRepository extends JpaRepository<SportGoal, Long> {
     List<SportGoal> findByUser_IdOrderByEventDateAsc(Long userId);
 
     Optional<SportGoal> findByIdAndUser_Id(Long id, Long userId);
+
+    void deleteByUser_Id(Long userId);
 }

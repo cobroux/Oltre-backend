@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Map;
 
 @RestController
@@ -93,6 +94,8 @@ public class AuthController {
         user.setUsername(request.username());
         user.setEmail(request.email());
         user.setPassword(passwordEncoder.encode(request.password()));
+        user.setAge(request.age());
+        user.setBirthDate(request.birthDate());
         user = userRepository.save(user);
 
         String token = jwtService.generateToken(user.getId(), user.getEmail());
@@ -105,5 +108,5 @@ public class AuthController {
     }
 
     record LoginRequest(String email, String password) {}
-    record RegisterRequest(String username, String email, String password) {}
+    record RegisterRequest(String username, String email, String password, Integer age, LocalDate birthDate) {}
 }

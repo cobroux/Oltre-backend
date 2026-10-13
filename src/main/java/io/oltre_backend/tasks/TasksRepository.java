@@ -17,6 +17,8 @@ public interface TasksRepository extends JpaRepository<Tasks, Long> {
 
     Optional<Tasks> findByIdAndUser_Id(Long id, Long userId);
 
+    void deleteByUser_Id(Long userId);
+
     @Transactional
     @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE tasks t SET t.tasks_status = :tasksStatus WHERE t.id = :id AND t.user_id = :userId", nativeQuery = true)
