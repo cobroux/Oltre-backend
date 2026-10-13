@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 @Service
 public class GarminService {
@@ -96,6 +97,16 @@ public class GarminService {
                     .body(GarminActivityDetailDTO.class);
         } catch (HttpClientErrorException.Unauthorized e) {
             throw new GarminAuthException("Compte Garmin non connecté ou session expirée.");
+        } catch (HttpClientErrorException.NotFound e) {
+            // Le sidecar renvoie une 404 "Not Found" générique de FastAPI
+            // quand la route elle-même n'existe pas (ex: sidecar pas encore
+            // redéployé avec la dernière version) - pas une vraie 404
+            // "activité introuvable" côté Garmin. Autant le dire clairement
+            // plutôt que de laisser remonter une stack trace Spring en 500.
+            throw new GarminServiceUnavailableException(
+                    "Service Garmin indisponible ou pas à jour. Réessaie plus tard.");
+        } catch (RestClientException e) {
+            throw new GarminServiceUnavailableException("Service Garmin injoignable. Réessaie plus tard.");
         }
     }
 
