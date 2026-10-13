@@ -17,6 +17,8 @@ public interface ExpensesRepository extends JpaRepository<Expenses, Long> {
 
     Optional<Expenses> findByIdAndUser_Id(Long id, Long userId);
 
+    void deleteByUser_Id(Long userId);
+
     @Transactional
     @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE expenses e SET e.expenses_name = :expensesName, e.amount = :amount, e.rec_type = :recType, e.start_date = :startDate, e.end_date = :endDate WHERE e.id = :id AND e.user_id = :userId", nativeQuery = true)
