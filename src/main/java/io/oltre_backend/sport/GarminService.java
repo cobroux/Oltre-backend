@@ -36,7 +36,22 @@ public class GarminService {
                     .retrieve()
                     .toBodilessEntity();
         } catch (HttpClientErrorException.Unauthorized e) {
-            throw new GarminAuthException("Identifiants Garmin invalides.");
+            // Le sidecar garmin-mcp renvoie le détail réel de l'échec dans le
+            // corps ({"detail": "..."}) : identifiants invalides, Garmin
+            // injoignable, ou un défi anti-bot/MFA qui bloque le login même
+            // avec les bons identifiants. On le relaie plutôt que d'afficher
+            // un "identifiants invalides" trompeur dans tous les cas.
+            throw new GarminAuthException(extractDetail(e).orElse("Identifiants Garmin invalides."));
+        }
+    }
+
+    private Optional<String> extractDetail(HttpClientErrorException e) {
+        try {
+            Map<String, Object> body = e.getResponseBodyAs(Map.class);
+            Object detail = body != null ? body.get("detail") : null;
+            return detail != null ? Optional.of(detail.toString()) : Optional.empty();
+        } catch (Exception parseError) {
+            return Optional.empty();
         }
     }
 
