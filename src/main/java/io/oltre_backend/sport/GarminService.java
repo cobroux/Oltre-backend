@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -17,6 +19,8 @@ import org.springframework.web.client.RestClientException;
 
 @Service
 public class GarminService {
+
+    private static final Logger log = LoggerFactory.getLogger(GarminService.class);
 
     private final RestClient restClient;
 
@@ -101,11 +105,15 @@ public class GarminService {
             // Le sidecar renvoie une 404 "Not Found" générique de FastAPI
             // quand la route elle-même n'existe pas (ex: sidecar pas encore
             // redéployé avec la dernière version) - pas une vraie 404
-            // "activité introuvable" côté Garmin. Autant le dire clairement
-            // plutôt que de laisser remonter une stack trace Spring en 500.
+            // "activité introuvable" côté Garmin. On le journalise (sinon ce
+            // cas devenait invisible dans les logs depuis qu'il est rattrapé
+            // proprement) et on le dit clairement au lieu de laisser remonter
+            // une stack trace Spring en 500.
+            log.warn("Garmin sidecar a renvoyé 404 sur /activities/{}/details - route manquante, sidecar pas à jour ?", activityId);
             throw new GarminServiceUnavailableException(
                     "Service Garmin indisponible ou pas à jour. Réessaie plus tard.");
         } catch (RestClientException e) {
+            log.warn("Garmin sidecar injoignable pour /activities/{}/details", activityId, e);
             throw new GarminServiceUnavailableException("Service Garmin injoignable. Réessaie plus tard.");
         }
     }
