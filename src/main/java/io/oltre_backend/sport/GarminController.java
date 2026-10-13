@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -65,6 +66,11 @@ public class GarminController {
     @GetMapping("/records")
     public GarminRecordsResponseDTO getRecords() {
         return garminService.getRecords(CurrentUser.id());
+    }
+
+    @GetMapping("/activities/{activityId}/details")
+    public GarminActivityDetailDTO getActivityDetails(@PathVariable String activityId) {
+        return garminService.getActivityDetails(CurrentUser.id(), activityId);
     }
 
     @ExceptionHandler(GarminAuthException.class)

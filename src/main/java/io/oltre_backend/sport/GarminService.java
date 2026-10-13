@@ -88,6 +88,17 @@ public class GarminService {
         }
     }
 
+    public GarminActivityDetailDTO getActivityDetails(Long userId, String activityId) {
+        try {
+            return restClient.get()
+                    .uri("/users/{userId}/activities/{activityId}/details", userId, activityId)
+                    .retrieve()
+                    .body(GarminActivityDetailDTO.class);
+        } catch (HttpClientErrorException.Unauthorized e) {
+            throw new GarminAuthException("Compte Garmin non connecté ou session expirée.");
+        }
+    }
+
     private static final double[] RUN_DISTANCE_BRACKET_KM = {5, 10, 15, 20, 21.1, 42.2};
     private static final String[] RUN_DISTANCE_BRACKET_LABEL = {"5 km", "10 km", "15 km", "20 km", "Semi-marathon", "Marathon"};
 
