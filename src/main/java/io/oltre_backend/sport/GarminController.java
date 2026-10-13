@@ -77,4 +77,9 @@ public class GarminController {
     public ResponseEntity<Map<String, String>> handleAuthError(GarminAuthException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
     }
+
+    @ExceptionHandler(GarminServiceUnavailableException.class)
+    public ResponseEntity<Map<String, String>> handleServiceUnavailable(GarminServiceUnavailableException e) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of("error", e.getMessage()));
+    }
 }
