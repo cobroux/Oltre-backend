@@ -2,6 +2,7 @@ package io.oltre_backend.auth;
 
 import io.oltre_backend.user.User;
 import io.oltre_backend.user.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,13 +38,14 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest http) {
+        String clientIp = http.getRemoteAddr();
         if (request.email() == null || request.password() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Email ou mot de passe incorrect"));
         }
 
-        if (loginAttemptService.isLocked(request.email())) {
+        if (loginAttemptService.isLocked(request.email(), clientIp)) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(Map.of("message", "Trop de tentatives échouées. Réessaie dans quelques minutes."));
         }
@@ -60,11 +62,11 @@ public class AuthController {
         boolean passwordMatches = passwordEncoder.matches(request.password(), hashToCheck);
 
         if (user == null || !passwordMatches) {
-            loginAttemptService.recordFailure(request.email());
+            loginAttemptService.recordFailure(request.email(), clientIp);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Email ou mot de passe incorrect"));
         }
-        loginAttemptService.recordSuccess(request.email());
+        loginAttemptService.recordSuccess(request.email(), clientIp);
 
         String token = jwtService.generateToken(user.getId(), user.getEmail());
 
