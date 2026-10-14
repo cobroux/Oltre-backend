@@ -1,12 +1,14 @@
 package io.oltre_backend.expenses;
 
+import java.math.BigDecimal;
+
 public class ExpensesYearItemDTO {
 
     private String expensesName;
     private RecType recType;
-    private Integer amountThisYear;
+    private BigDecimal amountThisYear;
 
-    public ExpensesYearItemDTO(String expensesName, RecType recType, Integer amountThisYear) {
+    public ExpensesYearItemDTO(String expensesName, RecType recType, BigDecimal amountThisYear) {
         this.expensesName = expensesName;
         this.recType = recType;
         this.amountThisYear = amountThisYear;
@@ -14,5 +16,5 @@ public class ExpensesYearItemDTO {
 
     public String getExpensesName() { return expensesName; }
     public RecType getRecType() { return recType; }
-    public Integer getAmountThisYear() { return amountThisYear; }
+    public BigDecimal getAmountThisYear() { return amountThisYear; }
 }
