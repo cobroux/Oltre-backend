@@ -1,8 +1,11 @@
 package io.oltre_backend.expenses;
 
+import java.math.BigDecimal;
+
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -65,7 +68,7 @@ public class ExpensesService {
         return toDto(expensesRepository.save(expenses));
     }
 
-    public void updateExpenses(Long id, Long userId, String expensesName, Integer amount, RecType recType, LocalDate startDate, LocalDate endDate) {
+    public void updateExpenses(Long id, Long userId, String expensesName, BigDecimal amount, RecType recType, LocalDate startDate, LocalDate endDate) {
         expensesRepository.findByIdAndUser_Id(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         expensesRepository.updateExpenses(id, userId, expensesName, amount, recType.name(), startDate, endDate);
@@ -132,44 +135,44 @@ public class ExpensesService {
         LocalDate yearStart = LocalDate.of(today.getYear(), 1, 1);
         LocalDate yearEnd = LocalDate.of(today.getYear(), 12, 31);
 
-        int monthlyTotal = 0, dailyTotal = 0, yearlyTotal = 0;
+        BigDecimal monthlyTotal = BigDecimal.ZERO, dailyTotal = BigDecimal.ZERO, yearlyTotal = BigDecimal.ZERO;
         List<ExpensesYearItemDTO> items = new ArrayList<>();
 
         for (Expenses e : expensesRepository.findByUser_Id(userId)) {
-            int amountThisYear = switch (e.getRecType()) {
+            BigDecimal amountThisYear = switch (e.getRecType()) {
                 case Monthly -> amountForRange(e, yearStart, yearEnd, ChronoUnit.MONTHS);
                 case Daily   -> amountForRange(e, yearStart, yearEnd, ChronoUnit.DAYS);
-                case Yearly  -> occursThisYear(e, yearEnd) ? e.getAmount() : 0;
+                case Yearly  -> occursThisYear(e, yearEnd) ? e.getAmount() : BigDecimal.ZERO;
             };
 
-            if (amountThisYear <= 0) continue;
+            if (amountThisYear.signum() <= 0) continue;
 
             switch (e.getRecType()) {
-                case Monthly -> monthlyTotal += amountThisYear;
-                case Daily   -> dailyTotal += amountThisYear;
-                case Yearly  -> yearlyTotal += amountThisYear;
+                case Monthly -> monthlyTotal = monthlyTotal.add(amountThisYear);
+                case Daily   -> dailyTotal = dailyTotal.add(amountThisYear);
+                case Yearly  -> yearlyTotal = yearlyTotal.add(amountThisYear);
             }
             items.add(new ExpensesYearItemDTO(e.getExpensesName(), e.getRecType(), amountThisYear));
         }
 
         items.sort(Comparator.comparing(ExpensesYearItemDTO::getAmountThisYear).reversed());
 
-        return new ExpensesYearRecapDTO(monthlyTotal + dailyTotal + yearlyTotal, monthlyTotal, dailyTotal, yearlyTotal, items);
+        return new ExpensesYearRecapDTO(monthlyTotal.add(dailyTotal).add(yearlyTotal), monthlyTotal, dailyTotal, yearlyTotal, items);
     }
 
     // Nombre d'occurrences (mois ou jours, selon `unit`) entre le début et
     // la fin de l'année pendant lesquelles la dépense était/sera active,
     // bornée par sa propre startDate/endDate.
-    private int amountForRange(Expenses e, LocalDate yearStart, LocalDate yearEnd, ChronoUnit unit) {
+    private BigDecimal amountForRange(Expenses e, LocalDate yearStart, LocalDate yearEnd, ChronoUnit unit) {
         LocalDate start = e.getStartDate().isAfter(yearStart) ? e.getStartDate() : yearStart;
         LocalDate end = (e.getEndDate() != null && e.getEndDate().isBefore(yearEnd)) ? e.getEndDate() : yearEnd;
-        if (end.isBefore(start)) return 0;
+        if (end.isBefore(start)) return BigDecimal.ZERO;
 
         long count = unit == ChronoUnit.MONTHS
                 ? ChronoUnit.MONTHS.between(start.withDayOfMonth(1), end.withDayOfMonth(1)) + 1
                 : ChronoUnit.DAYS.between(start, end) + 1;
 
-        return (int) (e.getAmount() * count);
+        return e.getAmount().multiply(BigDecimal.valueOf(count));
     }
 
     // Une dépense annuelle compte dès lors que son anniversaire (mois/jour
@@ -184,13 +187,14 @@ public class ExpensesService {
     // Tendance mensuelle : même projection que getYearRecap, mais répartie
     // mois par mois (Monthly/Daily comptés dans chaque mois où ils sont
     // actifs, Yearly compté en bloc dans son mois anniversaire).
-    public List<Integer> getMonthlyTrend(Long userId) {
+    public List<BigDecimal> getMonthlyTrend(Long userId) {
         return getMonthlyTrend(userId, LocalDate.now());
     }
 
-    public List<Integer> getMonthlyTrend(Long userId, LocalDate today) {
+    public List<BigDecimal> getMonthlyTrend(Long userId, LocalDate today) {
         int year = today.getYear();
-        int[] totals = new int[12];
+        BigDecimal[] totals = new BigDecimal[12];
+        Arrays.fill(totals, BigDecimal.ZERO);
         LocalDate yearEnd = LocalDate.of(year, 12, 31);
 
         for (Expenses e : expensesRepository.findByUser_Id(userId)) {
@@ -200,19 +204,18 @@ public class ExpensesService {
                     for (int m = 1; m <= 12; m++) {
                         LocalDate monthStart = LocalDate.of(year, m, 1);
                         LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
-                        totals[m - 1] += amountForRange(e, monthStart, monthEnd, unit);
+                        totals[m - 1] = totals[m - 1].add(amountForRange(e, monthStart, monthEnd, unit));
                     }
                 }
                 case Yearly -> {
                     if (occursThisYear(e, yearEnd)) {
-                        totals[e.getStartDate().getMonthValue() - 1] += e.getAmount();
+                        int month = e.getStartDate().getMonthValue() - 1;
+                        totals[month] = totals[month].add(e.getAmount());
                     }
                 }
             }
         }
 
-        List<Integer> amounts = new ArrayList<>(12);
-        for (int t : totals) amounts.add(t);
-        return amounts;
+        return List.of(totals);
     }
 }

@@ -1,5 +1,7 @@
 package io.oltre_backend.expenses;
 
+import java.math.BigDecimal;
+
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,7 +27,7 @@ class ExpensesRepositoryTest extends AbstractIntegrationTest {
         User john = new User("JohnDoe", 30, LocalDate.of(1996, 5, 12));
         User savedUser = userRepository.save(john);
 
-        Expenses expense = new Expenses("Netflix", 13, RecType.Monthly, LocalDate.now(), null);
+        Expenses expense = new Expenses("Netflix", new BigDecimal("13"), RecType.Monthly, LocalDate.now(), null);
         expense.setUser(savedUser);
         Expenses saved = expensesRepository.save(expense);
 
@@ -38,7 +40,7 @@ class ExpensesRepositoryTest extends AbstractIntegrationTest {
     @Test
     void testFindExpensesByUser() {
         User alice = new User("Alice", 25, LocalDate.of(2001, 1, 1));
-        Expenses spotify = new Expenses("Spotify", 10, RecType.Monthly, LocalDate.now(), null);
+        Expenses spotify = new Expenses("Spotify", new BigDecimal("10"), RecType.Monthly, LocalDate.now(), null);
         alice.addExpense(spotify);
         userRepository.save(alice);
         expensesRepository.save(spotify);
@@ -52,18 +54,24 @@ class ExpensesRepositoryTest extends AbstractIntegrationTest {
         User user = new User("TestUser", 25, LocalDate.of(2000, 1, 1));
         userRepository.save(user);
 
-        Expenses netflix = new Expenses("Netflix", 13, RecType.Monthly, LocalDate.now(), null);
+        Expenses netflix = new Expenses("Netflix", new BigDecimal("13"), RecType.Monthly, LocalDate.now(), null);
         netflix.setUser(user);
         Expenses saved = expensesRepository.save(netflix);
 
         expensesRepository.updateExpenses(
-            saved.getId(), user.getId(), "Netflix Premium", 20,
+            saved.getId(), user.getId(), "Netflix Premium", new BigDecimal("20"),
             RecType.Monthly.name(), LocalDate.now(), null
         );
         expensesRepository.flush();
 
         Expenses updated = expensesRepository.findById(saved.getId()).orElseThrow();
         assertEquals("Netflix Premium", updated.getExpensesName());
-        assertEquals(20, updated.getAmount());
+        assertAmount(20, updated.getAmount());
+    }
+
+    // BigDecimal.equals tient compte de l'échelle (20 != 20.00) : on compare la valeur.
+    private static void assertAmount(Number expected, BigDecimal actual) {
+        BigDecimal exp = expected instanceof BigDecimal b ? b : new BigDecimal(expected.toString());
+        assertEquals(0, exp.compareTo(actual), () -> "attendu " + exp + " mais obtenu " + actual);
     }
 }
