@@ -38,7 +38,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        if (request.email() == null) {
+        if (request.email() == null || request.password() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Email ou mot de passe incorrect"));
         }
