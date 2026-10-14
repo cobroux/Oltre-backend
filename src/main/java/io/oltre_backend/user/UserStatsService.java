@@ -1,5 +1,8 @@
 package io.oltre_backend.user;
 
+import java.math.BigDecimal;
+import java.util.Objects;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -30,12 +33,13 @@ public class UserStatsService {
     public UserStatsDTO getStats(Long userId) {
         LocalDate today = LocalDate.now();
 
-        int expensesThisMonth = expensesRepository.findByUser_Id(userId).stream()
+        BigDecimal expensesThisMonth = expensesRepository.findByUser_Id(userId).stream()
                 .filter(e -> e.getStartDate() != null
                         && e.getStartDate().getMonth() == today.getMonth()
                         && e.getStartDate().getYear() == today.getYear())
-                .mapToInt(Expenses::getAmount)
-                .sum();
+                .map(Expenses::getAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         int tasksInProgress = (int) tasksRepository.findByUser_Id(userId).stream()
                 .filter(t -> t.getTasksStatus() == TasksStatus.PENDING)

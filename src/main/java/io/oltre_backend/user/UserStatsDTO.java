@@ -1,16 +1,18 @@
 package io.oltre_backend.user;
 
+import java.math.BigDecimal;
+
 public class UserStatsDTO {
 
     private int sportSessionsLast30Days;
     private double sportDistanceKmLast30Days;
-    private int expensesThisMonth;
+    private BigDecimal expensesThisMonth;
     private int tasksInProgress;
 
     public UserStatsDTO() {}
 
     public UserStatsDTO(int sportSessionsLast30Days, double sportDistanceKmLast30Days,
-                         int expensesThisMonth, int tasksInProgress) {
+                         BigDecimal expensesThisMonth, int tasksInProgress) {
         this.sportSessionsLast30Days = sportSessionsLast30Days;
         this.sportDistanceKmLast30Days = sportDistanceKmLast30Days;
         this.expensesThisMonth = expensesThisMonth;
@@ -33,11 +35,11 @@ public class UserStatsDTO {
         this.sportDistanceKmLast30Days = sportDistanceKmLast30Days;
     }
 
-    public int getExpensesThisMonth() {
+    public BigDecimal getExpensesThisMonth() {
         return expensesThisMonth;
     }
 
-    public void setExpensesThisMonth(int expensesThisMonth) {
+    public void setExpensesThisMonth(BigDecimal expensesThisMonth) {
         this.expensesThisMonth = expensesThisMonth;
     }
 

@@ -1,5 +1,7 @@
 package io.oltre_backend.expenses;
 
+import java.math.BigDecimal;
+
 import java.time.LocalDate;
 
 public class ExpensesDto {
@@ -8,7 +10,7 @@ public class ExpensesDto {
     
         private String expensesName;
 
-        private Integer amount; 
+        private BigDecimal amount; 
 
         private RecType recType;
 
@@ -19,7 +21,7 @@ public class ExpensesDto {
         private LocalDate nextPaymentDate;
 
 
-    public ExpensesDto(Long id, String expensesName, Integer amount,  RecType recType, LocalDate startDate, LocalDate endDate) {
+    public ExpensesDto(Long id, String expensesName, BigDecimal amount,  RecType recType, LocalDate startDate, LocalDate endDate) {
         this.id = id;
         this.amount = amount;
         this.endDate = endDate;
@@ -39,11 +41,11 @@ public class ExpensesDto {
         this.expensesName = expensesName;
     }
 
-    public Integer getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(Integer amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 

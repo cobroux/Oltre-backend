@@ -1,16 +1,18 @@
 package io.oltre_backend.expenses;
 
+import java.math.BigDecimal;
+
 import java.util.List;
 
 public class ExpensesYearRecapDTO {
 
-    private Integer total;
-    private Integer monthlyTotal;
-    private Integer dailyTotal;
-    private Integer yearlyTotal;
+    private BigDecimal total;
+    private BigDecimal monthlyTotal;
+    private BigDecimal dailyTotal;
+    private BigDecimal yearlyTotal;
     private List<ExpensesYearItemDTO> items;
 
-    public ExpensesYearRecapDTO(Integer total, Integer monthlyTotal, Integer dailyTotal, Integer yearlyTotal,
+    public ExpensesYearRecapDTO(BigDecimal total, BigDecimal monthlyTotal, BigDecimal dailyTotal, BigDecimal yearlyTotal,
                                  List<ExpensesYearItemDTO> items) {
         this.total = total;
         this.monthlyTotal = monthlyTotal;
@@ -19,9 +21,9 @@ public class ExpensesYearRecapDTO {
         this.items = items;
     }
 
-    public Integer getTotal() { return total; }
-    public Integer getMonthlyTotal() { return monthlyTotal; }
-    public Integer getDailyTotal() { return dailyTotal; }
-    public Integer getYearlyTotal() { return yearlyTotal; }
+    public BigDecimal getTotal() { return total; }
+    public BigDecimal getMonthlyTotal() { return monthlyTotal; }
+    public BigDecimal getDailyTotal() { return dailyTotal; }
+    public BigDecimal getYearlyTotal() { return yearlyTotal; }
     public List<ExpensesYearItemDTO> getItems() { return items; }
 }

@@ -1,5 +1,7 @@
 package io.oltre_backend.expenses;
 
+import java.math.BigDecimal;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -50,9 +52,9 @@ public class ExpensesController {
     }
 
     @GetMapping("/amountPerMonth")
-    public Integer getAmountPerMonth() {
+    public BigDecimal getAmountPerMonth() {
 
-        Integer amount = 0;
+        BigDecimal amount = BigDecimal.ZERO;
         Iterable<ExpensesDto> expenses = expensesService.getExpensess(CurrentUser.id());
 
         LocalDate currentDate = LocalDate.now();
@@ -64,14 +66,14 @@ public class ExpensesController {
             if(!currentDate.isBefore(e.getStartDate())){
                  switch(e.getRecType()){
                     case RecType.Monthly :
-                        amount+=e.getAmount();
+                        amount = amount.add(e.getAmount());
                         break;
                     case RecType.Daily :
-                        amount+=(e.getAmount()*currentDate.lengthOfMonth());
+                        amount = amount.add(e.getAmount().multiply(BigDecimal.valueOf(currentDate.lengthOfMonth())));
                         break;
                     case RecType.Yearly :
                         if(currentDate.getMonth() == e.getStartDate().getMonth()){
-                            amount+=(e.getAmount());
+                            amount = amount.add(e.getAmount());
                         } 
                         break;
                     default:
@@ -104,7 +106,7 @@ public class ExpensesController {
 
 
     @PostMapping("/updateExpenses")
-    public void updateExpenses(Long id, String expensesName, Integer amount, RecType recType, String  startDate, String endDate){
+    public void updateExpenses(Long id, String expensesName, BigDecimal amount, RecType recType, String  startDate, String endDate){
 
          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
          expensesService.updateExpenses(id, CurrentUser.id(), expensesName, amount, recType, LocalDate.parse(startDate, formatter), LocalDate.parse(endDate, formatter));
