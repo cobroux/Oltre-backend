@@ -1,5 +1,7 @@
 package io.oltre_backend.expenses;
 
+import java.math.BigDecimal;
+
 import java.time.LocalDate;
 
 import io.oltre_backend.user.User;
@@ -25,8 +27,8 @@ public class Expenses {
     @Column(name = "expenses_name")
     private String expensesName;
 
-    @Column(name = "amount")
-    private Integer amount;
+    @Column(name = "amount", precision = 10, scale = 2)
+    private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "rec_type")
@@ -44,7 +46,7 @@ public class Expenses {
 
     public Expenses() {}
 
-    public Expenses(String name, Integer amount, RecType recType, LocalDate startDate, LocalDate endDate) {
+    public Expenses(String name, BigDecimal amount, RecType recType, LocalDate startDate, LocalDate endDate) {
         this.expensesName = name;
         this.amount = amount;
         this.recType = recType;
@@ -60,11 +62,11 @@ public class Expenses {
         this.expensesName = expensesName; 
     }
     
-    public Integer getAmount() { 
+    public BigDecimal getAmount() { 
         return amount; 
     }
     
-    public void setAmount(Integer amount) { 
+    public void setAmount(BigDecimal amount) { 
         this.amount = amount; 
     }
     

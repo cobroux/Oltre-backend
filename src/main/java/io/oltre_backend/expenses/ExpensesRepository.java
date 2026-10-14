@@ -1,5 +1,7 @@
 package io.oltre_backend.expenses;
 
+import java.math.BigDecimal;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +27,7 @@ public interface ExpensesRepository extends JpaRepository<Expenses, Long> {
     void updateExpenses(@Param("id") Long id,
                         @Param("userId") Long userId,
                         @Param("expensesName") String expensesName,
-                        @Param("amount") Integer amount,
+                        @Param("amount") BigDecimal amount,
                         @Param("recType") String recType,
                         @Param("startDate") LocalDate startDate,
                         @Param("endDate") LocalDate endDate);
