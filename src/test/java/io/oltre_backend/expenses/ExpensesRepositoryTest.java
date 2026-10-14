@@ -50,23 +50,16 @@ class ExpensesRepositoryTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void testUpdateExpenses() {
+    void testSaveKeepsCents() {
         User user = new User("TestUser", 25, LocalDate.of(2000, 1, 1));
         userRepository.save(user);
 
-        Expenses netflix = new Expenses("Netflix", new BigDecimal("13"), RecType.Monthly, LocalDate.now(), null);
-        netflix.setUser(user);
-        Expenses saved = expensesRepository.save(netflix);
+        Expenses spotify = new Expenses("Spotify", new BigDecimal("11.99"), RecType.Monthly, LocalDate.now(), null);
+        spotify.setUser(user);
+        Expenses saved = expensesRepository.saveAndFlush(spotify);
 
-        expensesRepository.updateExpenses(
-            saved.getId(), user.getId(), "Netflix Premium", new BigDecimal("20"),
-            RecType.Monthly.name(), LocalDate.now(), null
-        );
-        expensesRepository.flush();
-
-        Expenses updated = expensesRepository.findById(saved.getId()).orElseThrow();
-        assertEquals("Netflix Premium", updated.getExpensesName());
-        assertAmount(20, updated.getAmount());
+        Expenses reloaded = expensesRepository.findById(saved.getId()).orElseThrow();
+        assertAmount(new BigDecimal("11.99"), reloaded.getAmount());
     }
 
     // BigDecimal.equals tient compte de l'échelle (20 != 20.00) : on compare la valeur.

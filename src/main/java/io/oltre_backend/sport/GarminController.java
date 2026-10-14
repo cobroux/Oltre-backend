@@ -55,7 +55,10 @@ public class GarminController {
     public List<GarminActivityDTO> getActivities(
             @RequestParam(required = false) String monday,
             @RequestParam(defaultValue = "50") int limit) {
-        List<GarminActivityDTO> activities = garminService.getActivities(CurrentUser.id(), monday, limit);
+        // Borné : le frontend demande au plus 200 activités, inutile de laisser
+        // un client faire charger des milliers d'activités au sidecar.
+        int boundedLimit = Math.clamp(limit, 1, 200);
+        List<GarminActivityDTO> activities = garminService.getActivities(CurrentUser.id(), monday, boundedLimit);
         // Remplit le calendrier au passage (idempotent, voir
         // GarminCalendarSyncService) - pas de synchro séparée à déclencher,
         // ça se fait à chaque fois que la page Sport charge des activités.
