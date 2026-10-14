@@ -1,5 +1,7 @@
 package io.oltre_backend.tasks;
 
+import io.oltre_backend.tasks.task_enum.TasksStatus;
+
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -60,7 +62,13 @@ public class TasksService {
      public void updateTasksStatus(Long id, Long userId, String status) {
         tasksRepository.findByIdAndUser_Id(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        tasksRepository.updateTasksStatus(id, userId, status);
+        TasksStatus tasksStatus;
+        try {
+            tasksStatus = TasksStatus.valueOf(status);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Statut de tâche invalide");
+        }
+        tasksRepository.updateTasksStatus(id, userId, tasksStatus.name());
     }
 
 }

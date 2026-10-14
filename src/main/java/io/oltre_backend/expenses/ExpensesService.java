@@ -68,12 +68,6 @@ public class ExpensesService {
         return toDto(expensesRepository.save(expenses));
     }
 
-    public void updateExpenses(Long id, Long userId, String expensesName, BigDecimal amount, RecType recType, LocalDate startDate, LocalDate endDate) {
-        expensesRepository.findByIdAndUser_Id(id, userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        expensesRepository.updateExpenses(id, userId, expensesName, amount, recType.name(), startDate, endDate);
-    }
-
     
     public LocalDate computeNextPaymentDate(ExpensesDto e, LocalDate today) {
 
