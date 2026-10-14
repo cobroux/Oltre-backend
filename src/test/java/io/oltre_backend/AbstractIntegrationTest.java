@@ -23,6 +23,9 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.url", mysql::getJdbcUrl);
         registry.add("spring.datasource.username", mysql::getUsername);
         registry.add("spring.datasource.password", mysql::getPassword);
-registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");        registry.add("spring.flyway.enabled", () -> "false");
+        // Schéma créé par les vraies migrations Flyway puis validé par
+        // Hibernate : un écart entre V*.sql et les entités fait échouer les tests.
+        registry.add("spring.flyway.enabled", () -> "true");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
     }
 }
