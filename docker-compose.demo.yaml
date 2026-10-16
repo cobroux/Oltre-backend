@@ -1,0 +1,58 @@
+# Démo publique : docker compose -p oltre-demo -f docker-compose.demo.yaml --env-file .env.demo up --build -d
+# Aucun port publié (le Caddy de Zofolio route via le réseau externe "edge"),
+# aucune variable Garmin ou Gemini. .env.demo : JWT_SECRET, MYSQL_ROOT_PASSWORD, MYSQL_PASSWORD.
+name: oltre-demo
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?}
+      MYSQL_DATABASE: oltre
+      MYSQL_USER: oltre
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uoltre", "-p${MYSQL_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [internal]
+
+  backend:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: demo
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/oltre
+      SPRING_DATASOURCE_USERNAME: oltre
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?}
+      JWT_SECRET: ${JWT_SECRET:?}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:4200}
+    networks:
+      internal:
+      edge:
+        aliases: [oltre-demo-backend]
+
+  frontend:
+    build: ../oltre-frontend
+    restart: unless-stopped
+    depends_on: [backend]
+    environment:
+      API_URL: ${API_URL:-}
+      DEMO_MODE: "true"
+    networks:
+      edge:
+        aliases: [oltre-demo-frontend]
+
+volumes:
+  mysql_data:
+
+networks:
+  internal:
+  edge:
+    external: true
