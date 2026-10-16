@@ -1,6 +1,7 @@
 package io.oltre_backend.demo;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -80,5 +81,23 @@ class DemoProfileIT {
         assertThat(call("DELETE", "/api/users/me", auth, "")).isEqualTo(403);
         assertThat(call("POST", "/api/garmin/connect", auth, "{}")).isEqualTo(403);
         assertThat(users.findByEmail(DemoDataSeeder.EMAIL)).isNotNull();
+    }
+
+    @Test
+    void guardResistsPathParamsAndSeederRefusesForeignDb() throws Exception {
+        seeder.reset();
+        var me = users.findByEmail(DemoDataSeeder.EMAIL);
+        String auth = "Bearer " + jwt.generateToken(me.getId(), me.getEmail());
+        assertThat(call("DELETE", "/api/users/me;x=1", auth, "")).isEqualTo(403);
+        assertThat(call("POST", "/auth/register;x=1", null, "{}")).isEqualTo(403);
+        var other = new io.oltre_backend.user.User();
+        other.setUsername("x"); other.setEmail("autre@example.test"); other.setPassword("x");
+        users.save(other);
+        try {
+            assertThatThrownBy(seeder::reset).isInstanceOf(IllegalStateException.class);
+            assertThat(users.count()).isEqualTo(2);
+        } finally {
+            users.delete(other);
+        }
     }
 }
