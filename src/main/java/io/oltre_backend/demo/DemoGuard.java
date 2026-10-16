@@ -31,7 +31,8 @@ public class DemoGuard extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
-        String path = req.getRequestURI().replaceAll("/+$", "");
+        // getServletPath : décodé et sans ";param", sinon "/api/users/me;x=1" contournerait la liste
+        String path = req.getServletPath().replaceAll("/+$", "");
         if (BLOCKED.contains(req.getMethod() + " " + path)) {
             res.setStatus(HttpServletResponse.SC_FORBIDDEN);
             res.setContentType("application/json;charset=UTF-8");

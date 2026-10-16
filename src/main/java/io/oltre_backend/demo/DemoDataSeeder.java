@@ -69,6 +69,9 @@ public class DemoDataSeeder {
     @Scheduled(cron = "0 0 4 * * *", zone = "Europe/Paris")
     @Transactional
     public void reset() {
+        // Garde-fou : jamais de purge d'une base qui contient un autre utilisateur que l'athlète de démo.
+        if (users.findAll().stream().anyMatch(x -> !EMAIL.equals(x.getEmail())))
+            throw new IllegalStateException("Base non démo : purge refusée");
         plans.deleteAllInBatch();
         goals.deleteAllInBatch();
         tasks.deleteAllInBatch();
