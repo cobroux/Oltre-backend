@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.oltre_backend.auth.CurrentUser;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/coach")
@@ -32,7 +33,7 @@ public class CoachController {
     }
 
     @PostMapping("/goals")
-    public SportGoalDTO addGoal(@RequestBody SportGoalDTO dto) {
+    public SportGoalDTO addGoal(@Valid @RequestBody SportGoalDTO dto) {
         return coachService.addGoal(CurrentUser.id(), dto);
     }
 

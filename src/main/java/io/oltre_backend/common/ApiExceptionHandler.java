@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
@@ -13,6 +14,14 @@ import org.springframework.web.server.ResponseStatusException;
 // la réponse d'erreur par défaut de Spring, sans leur message interne.
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    // Échec de @Valid : 400 avec le premier message de contrainte.
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getAllErrors().stream()
+                .map(err -> err.getDefaultMessage()).findFirst().orElse("Requête invalide");
+        return ResponseEntity.badRequest().body(Map.of("message", message));
+    }
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, String>> handleResponseStatus(ResponseStatusException e) {

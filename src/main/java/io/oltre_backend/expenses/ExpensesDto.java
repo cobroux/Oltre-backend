@@ -4,16 +4,28 @@ import java.math.BigDecimal;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+
 public class ExpensesDto {
 
         private Long id;
     
+        @Size(max = 255, message = "Le nom est trop long")
         private String expensesName;
 
-        private BigDecimal amount; 
+        @NotNull(message = "Le montant est requis")
+        @Positive(message = "Le montant doit être positif")
+        private BigDecimal amount;
 
+        @NotNull(message = "La récurrence est requise")
         private RecType recType;
 
+        @NotNull(message = "La date de début est requise")
         private LocalDate startDate;
 
         private LocalDate endDate;
@@ -79,6 +91,12 @@ public class ExpensesDto {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    @JsonIgnore
+    @AssertTrue(message = "La date de fin doit être postérieure à la date de début")
+    public boolean isEndDateValid() {
+        return endDate == null || startDate == null || !endDate.isBefore(startDate);
     }
 
     public LocalDate getNextPaymentDate() {

@@ -60,19 +60,6 @@ public class UserService {
         return toDto(user);
     }
 
-    public Iterable<User> getUsers(){
-        return userRepository.findAll();
-    }
-
-    public void deleteUser(final Long id){
-        userRepository.deleteById(id);
-    }
-
-    public User saveUser(User user){
-        User savedUser = userRepository.save(user);
-        return savedUser;
-    }
-
     public UserDTO updateProfile(Long id, String username, Integer age, LocalDate birthDate) {
         User user = userRepository.findById(id).orElseThrow();
         if (username != null && !username.isBlank()) {

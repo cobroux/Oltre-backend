@@ -4,12 +4,21 @@ import java.time.LocalTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class appointmentDTO {
     private Long id;
+    @NotBlank(message = "Le titre est requis")
+    @Size(max = 255, message = "Le titre est trop long")
     private String title;
+    @Size(max = 255, message = "La description est trop longue")
     private String description;
+    @Size(max = 255, message = "Le lieu est trop long")
     private String location;
+    @NotNull(message = "La date est requise")
     private LocalDate apptDate;
     private LocalTime apptTime;
     private LocalTime apptEndTime;

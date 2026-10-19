@@ -2,6 +2,7 @@ package io.oltre_backend.tasks;
 
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import io.oltre_backend.auth.CurrentUser;
 
@@ -52,7 +54,12 @@ public class TasksController {
     @PutMapping("/update")
     public void updateTasksStatus(@RequestBody Map<String, String> body) {
 
-        Long id = Long.valueOf(body.get("id"));
+        Long id;
+        try {
+            id = Long.valueOf(body.get("id"));
+        } catch (NumberFormatException e) { // id absent (null) ou non numérique
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Identifiant invalide");
+        }
         String status = body.get("status");
         tasksService.updateTasksStatus(id, CurrentUser.id(), status);
     }

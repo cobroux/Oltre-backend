@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.oltre_backend.auth.CurrentUser;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/appointments")
@@ -28,10 +29,10 @@ public class appointmentController {
     }
 
     @PostMapping("/save")
-    public appointmentDTO save(@RequestBody appointmentDTO dto) { return service.save(dto, CurrentUser.id()); }
+    public appointmentDTO save(@Valid @RequestBody appointmentDTO dto) { return service.save(dto, CurrentUser.id()); }
 
     @PutMapping("/{id}")
-    public appointmentDTO update(@PathVariable Long id, @RequestBody appointmentDTO dto) {
+    public appointmentDTO update(@PathVariable Long id, @Valid @RequestBody appointmentDTO dto) {
         return service.update(id, CurrentUser.id(), dto);
     }
 

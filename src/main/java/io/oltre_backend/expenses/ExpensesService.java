@@ -3,6 +3,7 @@ package io.oltre_backend.expenses;
 import java.math.BigDecimal;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,24 +80,20 @@ public class ExpensesService {
 
             
             case Monthly: {
-
-                newDate = LocalDate.of(
-                    currentDate.getYear(),
-                    currentDate.getMonth(),
-                    startDate.getDayOfMonth()
-                ).plusMonths(1);
-                
-                return newDate;
+                // Première échéance >= max(aujourd'hui, début) ; le jour est
+                // ramené à la fin du mois si besoin (31 -> 30, 28...).
+                LocalDate from = currentDate.isBefore(startDate) ? startDate : currentDate;
+                YearMonth ym = YearMonth.from(from);
+                newDate = clampDay(ym, startDate.getDayOfMonth());
+                return newDate.isBefore(from) ? clampDay(ym.plusMonths(1), startDate.getDayOfMonth()) : newDate;
             }
 
             case Yearly: {
-               newDate = LocalDate.of(
-                    currentDate.getYear()+1,
-                    startDate.getMonth(),
-                    startDate.getDayOfMonth()
-                );
-                
-                return newDate;
+                LocalDate from = currentDate.isBefore(startDate) ? startDate : currentDate;
+                YearMonth ym = YearMonth.of(from.getYear(), startDate.getMonth());
+                newDate = clampDay(ym, startDate.getDayOfMonth());
+                // 29/02 : ramené au 28/02 les années non bissextiles
+                return newDate.isBefore(from) ? clampDay(ym.plusYears(1), startDate.getDayOfMonth()) : newDate;
             }
 
             case Daily: {
@@ -112,6 +109,10 @@ public class ExpensesService {
                 return null;
         }
 }
+
+    private static LocalDate clampDay(YearMonth ym, int day) {
+        return ym.atDay(Math.min(day, ym.lengthOfMonth()));
+    }
 
     // Récap "pour l'année en cours" : pour chaque dépense active, son coût
     // projeté sur l'année entière (1er janvier -> 31 décembre), bornée par

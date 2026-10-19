@@ -2,12 +2,21 @@ package io.oltre_backend.coach;
 
 import java.time.LocalDate;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 public class SportGoalDTO {
 
     private Long id;
+    @NotNull(message = "Le type d'objectif est requis")
     private SportGoalType goalType;
+    @NotBlank(message = "Le nom est requis")
+    @Size(max = 255, message = "Le nom est trop long")
     private String name;
+    @NotNull(message = "La date est requise")
     private LocalDate eventDate;
+    @Size(max = 255, message = "Le temps cible est trop long")
     private String targetTime;
 
     public SportGoalDTO() {}

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.oltre_backend.auth.CurrentUser;
+import jakarta.validation.Valid;
 
 
 @RestController
@@ -86,7 +87,7 @@ public class ExpensesController {
 
         
     @PostMapping("/save")
-    public ExpensesDto saveExpenses(@RequestBody ExpensesDto dto) {
+    public ExpensesDto saveExpenses(@Valid @RequestBody ExpensesDto dto) {
         Expenses expenses = new Expenses(
             dto.getExpensesName(),
             dto.getAmount(),
