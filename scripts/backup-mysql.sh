@@ -22,7 +22,10 @@ OUT_FILE="$BACKUP_DIR/oltre-$TIMESTAMP.sql.gz"
 
 mkdir -p "$BACKUP_DIR"
 
-docker exec oltre-mysql mysqldump -uoltre -p"$MYSQL_PASSWORD" oltre | gzip > "$OUT_FILE"
+# MYSQL_PWD est passé à docker exec par nom (sans valeur) : le mot de passe
+# n'apparaît ni dans les arguments de mysqldump ni dans ps.
+export MYSQL_PWD="$MYSQL_PASSWORD"
+docker exec -e MYSQL_PWD oltre-mysql mysqldump -uoltre --single-transaction oltre | gzip > "$OUT_FILE"
 echo "Backup written to $OUT_FILE ($(du -h "$OUT_FILE" | cut -f1))"
 
 find "$BACKUP_DIR" -name 'oltre-*.sql.gz' -mtime "+$RETENTION_DAYS" -print -delete
