@@ -80,10 +80,9 @@ public class appointmentService {
         repo.deleteById(id);
     }
 
-    // Édition manuelle d'un rendez-vous existant. Un rendez-vous généré
-    // automatiquement (Garmin/Coach IA) repasse en MANUAL dès qu'il est édité
-    // ici : une fois modifié par l'utilisateur, c'est devenu "son" rendez-vous
-    // et une future synchronisation ne doit plus l'écraser.
+    // Édition manuelle d'un rendez-vous existant. On garde source/sourceRef
+    // (sinon la synchro suivante le recréerait en double) et on pose `edited` :
+    // la synchro ne doit plus écraser ni supprimer un rendez-vous modifié.
     public appointmentDTO update(Long id, Long userId, appointmentDTO dto) {
         appointment a = repo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -114,8 +113,7 @@ public class appointmentService {
         a.setApptTime(dto.getApptTime());
         a.setApptEndTime(dto.getApptEndTime());
         a.setApptType(dto.getApptType());
-        a.setSource(AppointmentSource.MANUAL);
-        a.setSourceRef(null);
+        a.setEdited(true);
         return toDto(repo.save(a));
     }
 
@@ -136,6 +134,7 @@ public class appointmentService {
                     created.setApptType(appointmentType.SPORT);
                     return created;
                 });
+        if (a.isEdited()) return;
         a.setTitle(title);
         a.setDescription(description);
         a.setApptDate(apptDate);
@@ -147,9 +146,9 @@ public class appointmentService {
     // utilisé avant de réinjecter le plan du Coach IA, pour qu'une
     // régénération qui change un jour (ex: séance retirée) ne laisse pas une
     // entrée périmée dans le calendrier. Les rendez-vous que l'utilisateur a
-    // édités entre-temps sont déjà repassés en MANUAL (voir update()) et ne
-    // sont donc jamais touchés ici.
+    // édités entre-temps (`edited`, voir update()) sont conservés.
     public void deleteBySourceForWeek(Long userId, AppointmentSource source, LocalDate weekStart, LocalDate weekEnd) {
-        repo.deleteAll(repo.findByUser_IdAndSourceAndApptDateBetween(userId, source, weekStart, weekEnd));
+        repo.deleteAll(repo.findByUser_IdAndSourceAndApptDateBetween(userId, source, weekStart, weekEnd)
+                .stream().filter(a -> !a.isEdited()).toList());
     }
 }

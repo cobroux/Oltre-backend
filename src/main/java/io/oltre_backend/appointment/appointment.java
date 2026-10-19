@@ -57,6 +57,10 @@ public class appointment {
     @Column(name = "source_ref")
     private String sourceRef;
 
+    // Vrai dès que l'utilisateur a modifié l'entrée : la synchro ne l'écrase plus.
+    @Column(name = "edited", nullable = false)
+    private boolean edited = false;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
@@ -138,4 +142,8 @@ public class appointment {
     public String getSourceRef() { return sourceRef; }
 
     public void setSourceRef(String sourceRef) { this.sourceRef = sourceRef; }
+
+    public boolean isEdited() { return edited; }
+
+    public void setEdited(boolean edited) { this.edited = edited; }
 }
