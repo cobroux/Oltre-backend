@@ -10,6 +10,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,11 +21,13 @@ import io.oltre_backend.appointment.appointmentService;
 import io.oltre_backend.sport.GarminActivityDTO;
 import io.oltre_backend.sport.GarminAuthException;
 import io.oltre_backend.sport.GarminService;
+import io.oltre_backend.sport.GarminServiceUnavailableException;
 import io.oltre_backend.user.UserRepository;
 
 @Service
 public class CoachService {
 
+    private static final Logger log = LoggerFactory.getLogger(CoachService.class);
     private static final DateTimeFormatter ISO_DATE = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final List<String> WEEK_DAYS = List.of("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche");
 
@@ -169,6 +173,10 @@ public class CoachService {
         } catch (GarminAuthException e) {
             // Compte Garmin non connecté : on génère quand même un plan, juste
             // sans historique d'activités à analyser.
+            return List.of();
+        } catch (GarminServiceUnavailableException e) {
+            // Garmin éteint : le plan se génère quand même, sans historique.
+            log.warn("Garmin indisponible, plan généré sans activités récentes");
             return List.of();
         }
     }

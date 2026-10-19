@@ -2,9 +2,14 @@ package io.oltre_backend.meal;
 
 import java.time.LocalDate;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class MealDTO {
 
     private Long id;
+    @NotBlank(message = "Le nom du repas est requis")
+    @Size(max = 255, message = "Le nom du repas est trop long")
     private String mealName;
     private String mealDescript;
     private MealType mealType;

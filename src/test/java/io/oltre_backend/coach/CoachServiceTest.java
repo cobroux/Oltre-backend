@@ -48,6 +48,17 @@ class CoachServiceTest {
             """;
 
     @Test
+    void generatePlan_garminUnavailable_stillGeneratesPlan() {
+        when(sportGoalRepository.findByUser_IdOrderByEventDateAsc(USER_ID)).thenReturn(List.of());
+        when(garminService.getActivities(anyLong(), any(), anyInt()))
+                .thenThrow(new io.oltre_backend.sport.GarminServiceUnavailableException("down"));
+        when(coachPlanRepository.findByUser_Id(USER_ID)).thenReturn(Optional.empty());
+        when(geminiService.complete(any(), any())).thenReturn(VALID_JSON);
+
+        assertEquals("Semaine correcte, continue comme ça.", service.generatePlan(USER_ID).getAnalysis());
+    }
+
+    @Test
     void generatePlan_parsesValidResponse_andStoresSevenDaysInOrder() {
         when(sportGoalRepository.findByUser_IdOrderByEventDateAsc(USER_ID)).thenReturn(List.of());
         when(garminService.getActivities(anyLong(), any(), anyInt())).thenReturn(List.of());

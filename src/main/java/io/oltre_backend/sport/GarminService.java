@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
@@ -27,7 +28,12 @@ public class GarminService {
     public GarminService(
             @Value("${garmin.service-url}") String garminServiceUrl,
             @Value("${garmin.service-token}") String garminServiceToken) {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(3000);
+        requestFactory.setReadTimeout(15000);
+
         this.restClient = RestClient.builder()
+                .requestFactory(requestFactory)
                 .baseUrl(garminServiceUrl)
                 .defaultHeader("X-Internal-Token", garminServiceToken)
                 .build();
@@ -47,6 +53,8 @@ public class GarminService {
             // avec les bons identifiants. On le relaie plutôt que d'afficher
             // un "identifiants invalides" trompeur dans tous les cas.
             throw new GarminAuthException(extractDetail(e).orElse("Identifiants Garmin invalides."));
+        } catch (RestClientException e) {
+            throw unavailable("connect", e);
         }
     }
 
@@ -61,18 +69,32 @@ public class GarminService {
     }
 
     public boolean isConnected(Long userId) {
-        StatusResponse status = restClient.get()
-                .uri("/users/{userId}/status", userId)
-                .retrieve()
-                .body(StatusResponse.class);
-        return status != null && status.connected;
+        try {
+            StatusResponse status = restClient.get()
+                    .uri("/users/{userId}/status", userId)
+                    .retrieve()
+                    .body(StatusResponse.class);
+            return status != null && status.connected;
+        } catch (RestClientException e) {
+            throw unavailable("status", e);
+        }
+    }
+
+    // Sidecar éteint, timeout ou 5xx : 502 propre plutôt qu'un 500.
+    private GarminServiceUnavailableException unavailable(String operation, RestClientException e) {
+        log.warn("Garmin sidecar injoignable pour {}", operation, e);
+        return new GarminServiceUnavailableException("Service Garmin injoignable. Réessaie plus tard.");
     }
 
     public void disconnect(Long userId) {
-        restClient.delete()
-                .uri("/users/{userId}/connect", userId)
-                .retrieve()
-                .toBodilessEntity();
+        try {
+            restClient.delete()
+                    .uri("/users/{userId}/connect", userId)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            throw unavailable("disconnect", e);
+        }
     }
 
     public List<GarminActivityDTO> getActivities(Long userId, String monday, int limit) {
@@ -90,6 +112,8 @@ public class GarminService {
             return Arrays.stream(activities).map(GarminActivityDTO::new).toList();
         } catch (HttpClientErrorException.Unauthorized e) {
             throw new GarminAuthException("Compte Garmin non connecté ou session expirée.");
+        } catch (RestClientException e) {
+            throw unavailable("activities", e);
         }
     }
 

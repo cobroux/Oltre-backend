@@ -62,7 +62,7 @@ class AppointmentServiceTest {
     }
 
     @Test
-    void update_byOwner_detachesFromAutoSource() {
+    void update_byOwner_keepsSourceAndMarksEdited() {
         appointment existing = new appointment();
         existing.setId(5L);
         User owner = mock(User.class);
@@ -80,8 +80,9 @@ class AppointmentServiceTest {
 
         appointmentDTO result = service.update(5L, USER_ID, dto);
 
-        assertEquals(AppointmentSource.MANUAL, existing.getSource());
-        assertNull(existing.getSourceRef());
+        assertEquals(AppointmentSource.COACH_PLAN, existing.getSource());
+        assertEquals("coach-2026-10-19", existing.getSourceRef());
+        assertTrue(existing.isEdited());
         assertEquals("Course perso", result.getTitle());
     }
 
@@ -112,5 +113,36 @@ class AppointmentServiceTest {
                 LocalDate.of(2026, 10, 19), LocalDate.of(2026, 10, 25));
 
         verify(repo).deleteAll(List.of(a, b));
+    }
+
+    @Test
+    void upsertFromSource_editedEntry_isNotOverwritten() {
+        appointment existing = new appointment();
+        existing.setSource(AppointmentSource.GARMIN);
+        existing.setSourceRef("garmin-42");
+        existing.setTitle("Mon titre");
+        existing.setEdited(true);
+        when(repo.findByUser_IdAndSourceAndSourceRef(USER_ID, AppointmentSource.GARMIN, "garmin-42"))
+                .thenReturn(Optional.of(existing));
+
+        service.upsertFromSource(USER_ID, "Titre Garmin", "8 km", LocalDate.of(2026, 10, 10),
+                LocalTime.of(7, 12), AppointmentSource.GARMIN, "garmin-42");
+
+        assertEquals("Mon titre", existing.getTitle());
+        verify(repo, never()).save(any(appointment.class));
+    }
+
+    @Test
+    void deleteBySourceForWeek_keepsEditedEntries() {
+        appointment auto = new appointment();
+        appointment edited = new appointment();
+        edited.setEdited(true);
+        when(repo.findByUser_IdAndSourceAndApptDateBetween(any(), any(), any(), any()))
+                .thenReturn(List.of(auto, edited));
+
+        service.deleteBySourceForWeek(USER_ID, AppointmentSource.COACH_PLAN,
+                LocalDate.of(2026, 10, 19), LocalDate.of(2026, 10, 25));
+
+        verify(repo).deleteAll(List.of(auto));
     }
 }

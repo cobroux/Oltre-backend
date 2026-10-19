@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.oltre_backend.auth.CurrentUser;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 
 @RestController
 @RequestMapping("/api/users")
@@ -39,7 +41,7 @@ public class UserController{
     }
 
     @PutMapping("/me")
-    public UserDTO updateProfile(@RequestBody UpdateProfileRequest request) {
+    public UserDTO updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
         return userService.updateProfile(CurrentUser.id(), request.username(), request.age(), request.birthDate());
     }
 
@@ -60,6 +62,8 @@ public class UserController{
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
     }
 
-    record UpdateProfileRequest(String username, Integer age, LocalDate birthDate) {}
+    record UpdateProfileRequest(
+            @Size(max = 255, message = "Nom d'utilisateur trop long") String username,
+            Integer age, LocalDate birthDate) {}
     record ChangePasswordRequest(String currentPassword, String newPassword) {}
 }

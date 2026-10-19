@@ -32,10 +32,6 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractEmail(String token) {
-        return getClaims(token).getSubject();
-    }
-
     public Long extractUserId(String token) {
         return getClaims(token).get("userId", Long.class);
     }
