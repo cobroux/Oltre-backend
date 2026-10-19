@@ -100,4 +100,68 @@ class ApiErrorStatusTest extends AbstractIntegrationTest {
     void loginWithoutPassword_returns401() throws Exception {
         assertEquals(401, send("POST", "/auth/login", null, "{\"email\":\"x@test.local\"}").statusCode());
     }
+
+    @Test
+    void taskUpdateWithoutId_returns400() throws Exception {
+        String token = jwtService.generateToken(createUser(), "err@test.local");
+
+        assertEquals(400, send("PUT", "/api/tasks/update", token, "{\"status\":\"DONE\"}").statusCode());
+        assertEquals(400, send("PUT", "/api/tasks/update", token, "{\"id\":\"abc\",\"status\":\"DONE\"}").statusCode());
+    }
+
+    @Test
+    void expenseWithoutRequiredFields_returns400WithMessage() throws Exception {
+        String token = jwtService.generateToken(createUser(), "err@test.local");
+
+        HttpResponse<String> response = send("POST", "/api/expenses/save", token, "{\"expensesName\":\"x\"}");
+
+        assertEquals(400, response.statusCode());
+        assertTrue(response.body().contains("\"message\""), response.body());
+    }
+
+    @Test
+    void expenseEndBeforeStart_returns400() throws Exception {
+        String token = jwtService.generateToken(createUser(), "err@test.local");
+
+        assertEquals(400, send("POST", "/api/expenses/save", token,
+                "{\"expensesName\":\"x\",\"amount\":5,\"recType\":\"Monthly\","
+                + "\"startDate\":\"2026-05-10\",\"endDate\":\"2026-05-01\"}").statusCode());
+    }
+
+    @Test
+    void validExpense_returns200() throws Exception {
+        String token = jwtService.generateToken(createUser(), "err@test.local");
+
+        assertEquals(200, send("POST", "/api/expenses/save", token,
+                "{\"expensesName\":\"x\",\"amount\":5,\"recType\":\"Monthly\",\"startDate\":\"2026-01-31\"}").statusCode());
+    }
+
+    @Test
+    void appointmentWithoutTitle_returns400() throws Exception {
+        String token = jwtService.generateToken(createUser(), "err@test.local");
+
+        assertEquals(400, send("POST", "/api/appointments/save", token, "{\"apptDate\":\"2026-10-19\"}").statusCode());
+    }
+
+    @Test
+    void goalWithoutName_returns400() throws Exception {
+        String token = jwtService.generateToken(createUser(), "err@test.local");
+
+        assertEquals(400, send("POST", "/api/coach/goals", token, "{\"goalType\":\"RACE\"}").statusCode());
+    }
+
+    @Test
+    void mealWithoutName_returns400() throws Exception {
+        String token = jwtService.generateToken(createUser(), "err@test.local");
+
+        assertEquals(400, send("POST", "/api/meals/save", token, "{\"calories\":100}").statusCode());
+    }
+
+    @Test
+    void registerWithTooLongUsername_returns400() throws Exception {
+        String longName = "a".repeat(300);
+
+        assertEquals(400, send("POST", "/auth/register", null,
+                "{\"username\":\"" + longName + "\",\"email\":\"a@b.co\",\"password\":\"password123\"}").statusCode());
+    }
 }

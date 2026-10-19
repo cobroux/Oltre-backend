@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.oltre_backend.auth.CurrentUser;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/meals")
@@ -38,7 +39,7 @@ public class MealController {
     }
 
     @PostMapping("/save")
-    public MealDTO save(@RequestBody MealDTO dto) {
+    public MealDTO save(@Valid @RequestBody MealDTO dto) {
         return mealService.save(dto, CurrentUser.id());
     }
 

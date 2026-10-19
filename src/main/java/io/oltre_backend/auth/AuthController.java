@@ -3,6 +3,8 @@ package io.oltre_backend.auth;
 import io.oltre_backend.user.User;
 import io.oltre_backend.user.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -78,7 +80,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         if (request.username() == null || request.username().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le nom d'utilisateur est requis"));
         }
@@ -110,5 +112,9 @@ public class AuthController {
     }
 
     record LoginRequest(String email, String password) {}
-    record RegisterRequest(String username, String email, String password, Integer age, LocalDate birthDate) {}
+    record RegisterRequest(
+            @Size(max = 255, message = "Nom d'utilisateur trop long") String username,
+            @Size(max = 255, message = "Email trop long") String email,
+            @Size(max = 128, message = "Mot de passe trop long") String password,
+            Integer age, LocalDate birthDate) {}
 }
