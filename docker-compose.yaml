@@ -4,16 +4,16 @@ services:
     container_name: oltre-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Définis MYSQL_ROOT_PASSWORD dans .env}
       MYSQL_DATABASE: oltre
       MYSQL_USER: oltre
-      MYSQL_PASSWORD: oltre
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Définis MYSQL_PASSWORD dans .env}
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uoltre", "-poltre"]
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_PASSWORD mysqladmin ping -h localhost -u oltre"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -28,7 +28,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/oltre
       SPRING_DATASOURCE_USERNAME: oltre
-      SPRING_DATASOURCE_PASSWORD: oltre
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?Définis MYSQL_PASSWORD dans .env}
       GARMIN_SERVICE_URL: ${GARMIN_SERVICE_URL}
       GARMIN_SERVICE_TOKEN: ${GARMIN_SERVICE_TOKEN}
       JWT_SECRET: ${JWT_SECRET}
