@@ -6,3 +6,4 @@ target/
 .env
 certs/*.crt
 backups/
+.DS_Store
