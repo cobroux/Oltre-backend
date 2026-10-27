@@ -1,0 +1,42 @@
+# Surveillance de disponibilité (modèle Zotracker) : toutes les 15 minutes, la page d'accueil
+# doit répondre 200 et l'API 401 (backend vivant, simplement non authentifié ; 502 = backend tombé).
+# Deux essais espacés de 60 s ; si les deux échouent, notification ntfy puis échec du job.
+# Ignoré (sortie propre) tant que la variable de dépôt DOMAIN n'est pas définie.
+name: Healthcheck
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  healthcheck:
+    name: Vérifie le front et l'API
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: ${{ vars.DOMAIN != '' }}
+    steps:
+      - name: Interroger le site
+        shell: bash
+        env:
+          DOMAIN: ${{ vars.DOMAIN }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_SERVER: ${{ vars.NTFY_SERVER || 'https://ntfy.sh' }}
+        run: |
+          # Pas de set -x ni d'echo de l'URL ntfy : le topic ne doit jamais apparaître dans les logs.
+          up() {
+            [ "$(curl -s -o /dev/null -m 15 -w '%{http_code}' "https://$DOMAIN/")" = 200 ] &&
+            [ "$(curl -s -o /dev/null -m 15 -w '%{http_code}' "https://$DOMAIN/api/")" = 401 ]
+          }
+          if up; then echo "Oltre répond."; exit 0; fi
+          echo "Premier essai en échec, nouvel essai dans 60 s."
+          sleep 60
+          if up; then echo "Oltre répond au second essai."; exit 0; fi
+          echo "Oltre ne répond pas après deux essais."
+          if [ -n "$NTFY_TOPIC" ]; then
+            curl -fsS -m 10 -d "Oltre : le site ou l'API ne répond pas" "$NTFY_SERVER/$NTFY_TOPIC" > /dev/null \
+              || echo "Notification ntfy non envoyée."
+          fi
+          exit 1

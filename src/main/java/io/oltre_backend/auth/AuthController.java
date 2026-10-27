@@ -5,6 +5,7 @@ import io.oltre_backend.user.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,15 +29,18 @@ public class AuthController {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final LoginAttemptService loginAttemptService;
+    private final boolean registrationEnabled;
 
     public AuthController(UserRepository userRepository,
                           JwtService jwtService,
                           PasswordEncoder passwordEncoder,
-                          LoginAttemptService loginAttemptService) {
+                          LoginAttemptService loginAttemptService,
+                          @Value("${app.registration.enabled:true}") boolean registrationEnabled) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.loginAttemptService = loginAttemptService;
+        this.registrationEnabled = registrationEnabled;
     }
 
     @PostMapping("/login")
@@ -81,6 +85,10 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        // Appli perso : en prod, pas de comptes tiers (quota Gemini, appels Garmin, données).
+        if (!registrationEnabled) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Les inscriptions sont fermées"));
+        }
         if (request.username() == null || request.username().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le nom d'utilisateur est requis"));
         }
