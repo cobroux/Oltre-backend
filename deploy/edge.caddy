@@ -1,0 +1,22 @@
+# Routage Oltre sur la VM Oracle partagée (source de vérité).
+# Copié dans /opt/edge/caddy/sites/oltre.caddy (proxy frontal partagé, indépendant de Zofolio),
+# puis : docker exec edge-caddy caddy reload --config /etc/caddy/Caddyfile
+# Sur un VPS dédié, utiliser plutôt Caddyfile + docker-compose.prod.yaml (voir DEPLOY.md).
+oltre.88-96-45-97.sslip.io {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy oltre-backend:8080
+	}
+	handle /auth/* {
+		reverse_proxy oltre-backend:8080
+	}
+	handle {
+		reverse_proxy oltre-frontend:80
+	}
+}
