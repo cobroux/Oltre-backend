@@ -35,6 +35,10 @@ public class User {
  
     private String password;
 
+    // Jeton secret de l'URL d'abonnement .ics (null = flux désactivé).
+    @Column(name = "calendar_token", unique = true)
+    private String calendarToken;
+
     @OneToMany(mappedBy="user")
     private Set<Expenses> expenses  = new java.util.HashSet<>();;
 
@@ -118,4 +122,8 @@ public class User {
     public void setPassword(String password) { 
         this.password = password; 
     }
+
+    public String getCalendarToken() { return calendarToken; }
+
+    public void setCalendarToken(String calendarToken) { this.calendarToken = calendarToken; }
 }
