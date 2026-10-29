@@ -3,6 +3,9 @@ package io.oltre_backend.coach;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,37 +23,43 @@ import org.springframework.web.client.RestClient;
 @Service
 public class GeminiService {
 
+    private static final Logger log = LoggerFactory.getLogger(GeminiService.class);
+
     private final String apiKey;
     private final String model;
+    private final String fallbackModel;
     private final RestClient restClient;
     private final long[] retryDelaysMs;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // Gemini renvoie 503 (modèle saturé) ou 429 lors des pics de charge,
-    // généralement pour quelques secondes : on réessaie 2 fois avant d'abandonner.
+    // généralement pour quelques secondes : on réessaie 2 fois, puis on passe
+    // au modèle de secours (souvent moins demandé) avant d'abandonner.
     private static final long[] RETRY_DELAYS_MS = {2000, 5000};
 
     @Autowired
     public GeminiService(
             @Value("${gemini.api-key}") String apiKey,
-            @Value("${gemini.model}") String model) {
-        this(apiKey, model, RestClient.builder().requestFactory(requestFactory()), RETRY_DELAYS_MS);
+            @Value("${gemini.model}") String model,
+            @Value("${gemini.fallback-model:}") String fallbackModel) {
+        this(apiKey, model, fallbackModel, RestClient.builder().requestFactory(requestFactory()), RETRY_DELAYS_MS);
     }
 
-    GeminiService(String apiKey, String model, RestClient.Builder builder, long[] retryDelaysMs) {
+    GeminiService(String apiKey, String model, String fallbackModel, RestClient.Builder builder, long[] retryDelaysMs) {
         this.apiKey = apiKey;
         this.model = model;
+        this.fallbackModel = fallbackModel;
         this.retryDelaysMs = retryDelaysMs;
         this.restClient = builder.baseUrl("https://generativelanguage.googleapis.com").build();
     }
 
     private static SimpleClientHttpRequestFactory requestFactory() {
         // Une génération de plan implique un aller-retour LLM, nettement
-        // plus lent qu'un simple appel REST - 20s de lecture plutôt que les
-        // 3-5s habituels ailleurs dans le backend.
+        // plus lent qu'un simple appel REST. Aux heures de pointe le palier
+        // gratuit met 35-50 s à répondre (mesuré le 29/10/2026) : 90 s de lecture.
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(5000);
-        requestFactory.setReadTimeout(20000);
+        requestFactory.setReadTimeout(90000);
         return requestFactory;
     }
 
@@ -59,6 +68,21 @@ public class GeminiService {
             throw new CoachAiNotConfiguredException(
                     "Coach IA pas encore configuré : aucune clé API Gemini (GEMINI_API_KEY) n'est définie sur le serveur.");
         }
+        boolean hasFallback = fallbackModel != null && !fallbackModel.isBlank() && !fallbackModel.equals(model);
+        try {
+            return generate(model, systemPrompt, userPrompt);
+        } catch (OverloadedException e) {
+            if (!hasFallback) throw e.toCoachError();
+            log.warn("Gemini {} saturé, bascule sur le modèle de secours {}", model, fallbackModel);
+        }
+        try {
+            return generate(fallbackModel, systemPrompt, userPrompt);
+        } catch (OverloadedException e) {
+            throw e.toCoachError();
+        }
+    }
+
+    private String generate(String model, String systemPrompt, String userPrompt) {
 
         GenerateContentResponse response;
         for (int attempt = 0; ; attempt++) {
@@ -94,10 +118,7 @@ public class GeminiService {
                 response = raw == null ? null : objectMapper.readValue(raw, GenerateContentResponse.class);
                 break;
             } catch (HttpServerErrorException.ServiceUnavailable | HttpClientErrorException.TooManyRequests e) {
-                if (attempt >= retryDelaysMs.length) {
-                    throw new CoachGenerationException(
-                            "Le Coach IA est surchargé en ce moment (forte demande chez Google). Réessaie dans quelques minutes.", e);
-                }
+                if (attempt >= retryDelaysMs.length) throw new OverloadedException(e);
                 try {
                     Thread.sleep(retryDelaysMs[attempt]);
                 } catch (InterruptedException ie) {
@@ -118,6 +139,15 @@ public class GeminiService {
             throw new CoachGenerationException("Réponse vide du Coach IA.");
         }
         return response.candidates.get(0).content.parts.get(0).text;
+    }
+
+    private static class OverloadedException extends RuntimeException {
+        OverloadedException(Exception cause) { super(cause); }
+
+        CoachGenerationException toCoachError() {
+            return new CoachGenerationException(
+                    "Le Coach IA est surchargé en ce moment (forte demande chez Google). Réessaie dans quelques minutes.", getCause());
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
