@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.ExpectedCount.times;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -21,7 +22,7 @@ class GeminiServiceTest {
 
     private final RestClient.Builder builder = RestClient.builder();
     private final MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-    private final GeminiService service = new GeminiService("key", "model", builder, new long[] {0, 0});
+    private final GeminiService service = new GeminiService("key", "model", "", builder, new long[] {0, 0});
 
     @Test
     void overloaded_thenOk_retriesAndSucceeds() {
@@ -39,6 +40,20 @@ class GeminiServiceTest {
         CoachGenerationException e = assertThrows(CoachGenerationException.class, () -> service.complete("sys", "user"));
         assertTrue(e.getMessage().contains("surchargé"), e.getMessage());
         server.verify();
+    }
+
+    @Test
+    void primaryStillOverloaded_fallsBackToSecondModel() {
+        RestClient.Builder b = RestClient.builder();
+        MockRestServiceServer s = MockRestServiceServer.bindTo(b).build();
+        GeminiService withFallback = new GeminiService("key", "main", "backup", b, new long[] {0, 0});
+        s.expect(times(3), requestTo(org.hamcrest.Matchers.endsWith("/models/main:generateContent")))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+        s.expect(requestTo(org.hamcrest.Matchers.endsWith("/models/backup:generateContent")))
+                .andRespond(withSuccess(OK_BODY, MediaType.APPLICATION_JSON));
+
+        assertEquals("{}", withFallback.complete("sys", "user"));
+        s.verify();
     }
 
     @Test
