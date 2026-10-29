@@ -45,6 +45,9 @@ public class SecurityConfig {
                 // si cette route exige un jeton, la vraie erreur est masquée
                 // par un 403 générique.
                 .requestMatchers("/error").permitAll()
+                // Flux .ics lu par Google/Apple, qui n'envoient pas de JWT :
+                // protégé par le jeton secret dans l'URL.
+                .requestMatchers("/api/calendar/feed/**").permitAll()
                 .anyRequest().authenticated()
             )
             // Jeton absent, invalide ou expiré : 401 (et non 403), pour que le

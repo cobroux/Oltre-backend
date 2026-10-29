@@ -13,5 +13,7 @@ public interface appointmentRepository extends JpaRepository<appointment, Long> 
 
     List<appointment> findByUser_IdAndSourceAndApptDateBetween(Long userId, AppointmentSource source, LocalDate start, LocalDate end);
 
+    List<appointment> findByUser_IdAndApptDateGreaterThanEqual(Long userId, LocalDate from);
+
     void deleteByUser_Id(Long userId);
 }
