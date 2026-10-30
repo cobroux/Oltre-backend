@@ -48,6 +48,11 @@ public class UserExportService {
         profile.put("age", user.getAge());
         profile.put("birthDate", user.getBirthDate());
         out.put("profile", profile);
+        // Préférences seulement : jamais les clés d'abonnement push des appareils.
+        out.put("notificationPreferences", Map.of(
+                "apptEnabled", user.isPushApptEnabled(), "apptMinutesBefore", user.getPushApptMinutes(),
+                "tasksEnabled", user.isPushTasksEnabled(), "tasksTime", user.getPushTasksTime().toString(),
+                "coachEnabled", user.isPushCoachEnabled()));
         out.put("appointments", appointments);
         out.put("tasks", tasksService.getTasks(id));
         out.put("meals", mealService.getAll(id));

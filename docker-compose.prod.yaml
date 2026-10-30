@@ -45,6 +45,9 @@ services:
       ALLOWED_ORIGINS: https://${DOMAIN}
       # Laissé vide par défaut (Coach IA reste inactif, 503 clair).
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
       # Swagger/OpenAPI public par défaut - couper l'exposition de la
       # surface d'API en production tant que rien ne l'exige réellement.
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}

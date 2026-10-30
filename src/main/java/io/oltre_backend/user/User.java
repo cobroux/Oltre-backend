@@ -1,6 +1,7 @@
 package io.oltre_backend.user;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -38,6 +39,22 @@ public class User {
     // Jeton secret de l'URL d'abonnement .ics (null = flux désactivé).
     @Column(name = "calendar_token", unique = true)
     private String calendarToken;
+
+    // Préférences de notifications push (défauts alignés sur la migration V4).
+    @Column(name = "push_appt_enabled", nullable = false)
+    private boolean pushApptEnabled = true;
+
+    @Column(name = "push_appt_minutes", nullable = false)
+    private int pushApptMinutes = 60;
+
+    @Column(name = "push_tasks_enabled", nullable = false)
+    private boolean pushTasksEnabled = true;
+
+    @Column(name = "push_tasks_time", nullable = false)
+    private LocalTime pushTasksTime = LocalTime.of(8, 0);
+
+    @Column(name = "push_coach_enabled", nullable = false)
+    private boolean pushCoachEnabled = true;
 
     @OneToMany(mappedBy="user")
     private Set<Expenses> expenses  = new java.util.HashSet<>();;
@@ -126,4 +143,15 @@ public class User {
     public String getCalendarToken() { return calendarToken; }
 
     public void setCalendarToken(String calendarToken) { this.calendarToken = calendarToken; }
+
+    public boolean isPushApptEnabled() { return pushApptEnabled; }
+    public void setPushApptEnabled(boolean v) { this.pushApptEnabled = v; }
+    public int getPushApptMinutes() { return pushApptMinutes; }
+    public void setPushApptMinutes(int v) { this.pushApptMinutes = v; }
+    public boolean isPushTasksEnabled() { return pushTasksEnabled; }
+    public void setPushTasksEnabled(boolean v) { this.pushTasksEnabled = v; }
+    public LocalTime getPushTasksTime() { return pushTasksTime; }
+    public void setPushTasksTime(LocalTime v) { this.pushTasksTime = v; }
+    public boolean isPushCoachEnabled() { return pushCoachEnabled; }
+    public void setPushCoachEnabled(boolean v) { this.pushCoachEnabled = v; }
 }

@@ -114,6 +114,29 @@
     <version>0.13.0</version>
     <scope>runtime</scope>
 </dependency>
+<!-- Web Push (VAPID) -->
+<dependency>
+    <groupId>nl.martijndwars</groupId>
+    <artifactId>web-push</artifactId>
+    <version>5.1.2</version>
+</dependency>
+<!-- web-push déclare ces libs en runtime ; nécessaires pour compiler contre son API (HttpResponse, JoseException). -->
+<dependency>
+    <groupId>org.apache.httpcomponents</groupId>
+    <artifactId>httpasyncclient</artifactId>
+    <version>4.1.5</version>
+</dependency>
+<dependency>
+    <groupId>org.bitbucket.b_c</groupId>
+    <artifactId>jose4j</artifactId>
+    <version>0.9.6</version>
+</dependency>
+<!-- Même version que celle tirée par web-push (scope runtime là-bas) ; déclarée pour enregistrer le provider. -->
+<dependency>
+    <groupId>org.bouncycastle</groupId>
+    <artifactId>bcprov-jdk15on</artifactId>
+    <version>1.70</version>
+</dependency>
 	</dependencies>
 
 	<build>
