@@ -98,11 +98,16 @@ public class GarminService {
     }
 
     public List<GarminActivityDTO> getActivities(Long userId, String monday, int limit) {
+        return getActivities(userId, monday, limit, 0);
+    }
+
+    private List<GarminActivityDTO> getActivities(Long userId, String monday, int limit, int start) {
         try {
             GarminActivity[] activities = restClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/users/{userId}/activities")
                             .queryParam("limit", limit)
+                            .queryParam("start", start)
                             .queryParamIfPresent("since", Optional.ofNullable(monday))
                             .build(userId))
                     .retrieve()
@@ -145,6 +150,9 @@ public class GarminService {
     private static final double[] RUN_DISTANCE_BRACKET_KM = {5, 10, 15, 20, 21.1, 42.2};
     private static final String[] RUN_DISTANCE_BRACKET_LABEL = {"5 km", "10 km", "15 km", "20 km", "Semi-marathon", "Marathon"};
 
+    private static final int SIDECAR_PAGE_SIZE = 200;
+    private static final int MAX_RECORD_ACTIVITIES = 5000;
+
     private String sportFamily(String sportType) {
         String type = sportType != null ? sportType : "";
         if (type.contains("running")) return "running";
@@ -156,7 +164,14 @@ public class GarminService {
     }
 
     public GarminRecordsResponseDTO getRecords(Long userId) {
-        List<GarminActivityDTO> activities = getActivities(userId, null, 500);
+        // Le sidecar plafonne à 200 activités par appel : sans pagination,
+        // "depuis toujours" ne voyait que les 200 dernières (≈ cette année).
+        List<GarminActivityDTO> activities = new ArrayList<>();
+        for (int start = 0; start < MAX_RECORD_ACTIVITIES; start += SIDECAR_PAGE_SIZE) {
+            List<GarminActivityDTO> page = getActivities(userId, null, SIDECAR_PAGE_SIZE, start);
+            activities.addAll(page);
+            if (page.size() < SIDECAR_PAGE_SIZE) break;
+        }
         List<GarminActivityDTO> thisYearActivities = activities.stream()
                 .filter(a -> isCurrentYear(a.getStartLocal()))
                 .toList();
@@ -228,7 +243,10 @@ public class GarminService {
             for (GarminActivityDTO a : runs) {
                 if (a.getDistance() == null || a.getMovingTime() == null) continue;
                 double km = a.getDistance() / 1000.0;
-                if (km < targetKm * 0.9 || km > targetKm * 1.1) continue;
+                // shortcut: temps de la sortie entière (pas de meilleur segment
+                // dans une sortie plus longue) ; fenêtre étroite pour qu'une
+                // sortie de 14 km ne compte pas comme un 15 km, ni un semi comme un 20 km.
+                if (km < targetKm * 0.99 || km > targetKm * 1.03) continue;
                 if (best == null || a.getMovingTime() < best.getMovingTime()) {
                     best = a;
                 }
