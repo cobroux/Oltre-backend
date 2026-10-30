@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
@@ -83,11 +84,19 @@ public class AuthController {
         ));
     }
 
+    @GetMapping("/registration")
+    public Map<String, Boolean> registration() {
+        return Map.of("enabled", registrationEnabled);
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         // Appli perso : en prod, pas de comptes tiers (quota Gemini, appels Garmin, données).
         if (!registrationEnabled) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Les inscriptions sont fermées"));
+        }
+        if (!Boolean.TRUE.equals(request.acceptTerms())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Tu dois accepter les CGU et la politique de confidentialité"));
         }
         if (request.username() == null || request.username().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le nom d'utilisateur est requis"));
@@ -108,6 +117,7 @@ public class AuthController {
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setAge(request.age());
         user.setBirthDate(request.birthDate());
+        user.setTermsAcceptedAt(LocalDateTime.now());
         user = userRepository.save(user);
 
         String token = jwtService.generateToken(user.getId(), user.getEmail());
@@ -124,5 +134,5 @@ public class AuthController {
             @Size(max = 255, message = "Nom d'utilisateur trop long") String username,
             @Size(max = 255, message = "Email trop long") String email,
             @Size(max = 128, message = "Mot de passe trop long") String password,
-            Integer age, LocalDate birthDate) {}
+            Integer age, LocalDate birthDate, Boolean acceptTerms) {}
 }

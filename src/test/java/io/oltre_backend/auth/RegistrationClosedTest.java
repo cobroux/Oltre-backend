@@ -13,7 +13,7 @@ class RegistrationClosedTest {
         AuthController controller = new AuthController(null, null, null, null, false);
 
         ResponseEntity<?> response = controller.register(new AuthController.RegisterRequest(
-                "intrus", "intrus@example.com", "motdepasse123", null, null));
+                "intrus", "intrus@example.com", "motdepasse123", null, null, null));
 
         assertEquals(403, response.getStatusCode().value());
     }

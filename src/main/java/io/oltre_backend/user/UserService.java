@@ -52,12 +52,20 @@ public class UserService {
     }
 
     private UserDTO toDto(User user) {
-        return new UserDTO(user.getUsername(), user.getBirthDate(), user.getAge());
+        return new UserDTO(user.getUsername(), user.getBirthDate(), user.getAge(), user.getOnboardingCompletedAt() != null);
     }
 
     public UserDTO getUserById(Long id) {
         User user = userRepository.findById(id).orElseThrow();
         return toDto(user);
+    }
+
+    public void completeOnboarding(Long id) {
+        User user = userRepository.findById(id).orElseThrow();
+        if (user.getOnboardingCompletedAt() == null) {
+            user.setOnboardingCompletedAt(java.time.LocalDateTime.now());
+            userRepository.save(user);
+        }
     }
 
     public UserDTO updateProfile(Long id, String username, Integer age, LocalDate birthDate) {
