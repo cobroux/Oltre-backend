@@ -26,6 +26,10 @@ public class appointmentService {
                 a.getSource());
     }
 
+    public List<appointmentDTO> getAll(Long userId) {
+        return repo.findByUser_Id(userId).stream().map(this::toDto).toList();
+    }
+
     public List<appointmentDTO> getWeek(LocalDate monday, Long userId) {
         return repo.findByApptDateBetweenAndUser_IdOrderByApptTimeAsc(monday, monday.plusDays(6), userId)
                 .stream().map(this::toDto).toList();

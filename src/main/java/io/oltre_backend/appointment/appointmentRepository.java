@@ -7,6 +7,8 @@ import java.util.Optional;
 public interface appointmentRepository extends JpaRepository<appointment, Long> {
     List<appointment> findByApptDateBetweenAndUser_IdOrderByApptTimeAsc(LocalDate start, LocalDate end, Long userId);
 
+    List<appointment> findByUser_Id(Long userId);
+
     List<appointment> findByApptDateAndUser_Id(LocalDate apptDate, Long userId);
 
     Optional<appointment> findByUser_IdAndSourceAndSourceRef(Long userId, AppointmentSource source, String sourceRef);

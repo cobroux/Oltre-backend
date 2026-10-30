@@ -29,6 +29,10 @@ public class MealService {
         );
     }
 
+    public List<MealDTO> getAll(Long userId) {
+        return mealRepository.findByUser_Id(userId).stream().map(this::toDto).toList();
+    }
+
     // Repas d'un jour
     public List<MealDTO> getByDate(LocalDate date, Long userId) {
         return mealRepository.findByMealDateAndUser_Id(date, userId)
