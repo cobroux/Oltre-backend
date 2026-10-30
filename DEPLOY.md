@@ -20,6 +20,9 @@ Remplis au minimum :
 - `DOMAIN` — ton nom de domaine réel
 - `MYSQL_ROOT_PASSWORD` / `MYSQL_PASSWORD` — génère avec `openssl rand -hex 24`
 - `JWT_SECRET` — génère avec `openssl rand -hex 32`
+- `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` — notifications push (optionnel ; vides = push désactivé).
+  Génère la paire avec `npx web-push generate-vapid-keys` ; `VAPID_SUBJECT` = `mailto:ton@email`.
+  Ne change plus la paire ensuite : les abonnements existants deviendraient invalides.
 - `GARMIN_SERVICE_URL` / `GARMIN_SERVICE_TOKEN` — si tu utilises l'intégration Garmin
 
 ## 3. Firewall
