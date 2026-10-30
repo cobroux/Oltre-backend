@@ -96,6 +96,12 @@
     <artifactId>spring-boot-starter-security</artifactId>
 </dependency>
 
+<!-- Envoi d'emails (mot de passe oublié), SMTP générique -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-mail</artifactId>
+</dependency>
+
 <!-- JWT -->
 <dependency>
     <groupId>io.jsonwebtoken</groupId>

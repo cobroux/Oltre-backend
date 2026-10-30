@@ -31,17 +31,20 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final LoginAttemptService loginAttemptService;
     private final boolean registrationEnabled;
+    private final PasswordResetService passwordResetService;
 
     public AuthController(UserRepository userRepository,
                           JwtService jwtService,
                           PasswordEncoder passwordEncoder,
                           LoginAttemptService loginAttemptService,
-                          @Value("${app.registration.enabled:true}") boolean registrationEnabled) {
+                          @Value("${app.registration.enabled:true}") boolean registrationEnabled,
+                          PasswordResetService passwordResetService) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.loginAttemptService = loginAttemptService;
         this.registrationEnabled = registrationEnabled;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/login")
@@ -129,6 +132,27 @@ public class AuthController {
         ));
     }
 
+    // Toujours 204 : aucune différence de réponse entre email connu, inconnu ou limité.
+    @PostMapping("/password/forgot")
+    public ResponseEntity<Void> forgotPassword(@RequestBody ForgotRequest request, HttpServletRequest http) {
+        passwordResetService.requestReset(request.email(), http.getRemoteAddr());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/password/reset")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetRequest request, HttpServletRequest http) {
+        if (request.password() == null || request.password().length() < 8) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Le mot de passe doit contenir au moins 8 caractères"));
+        }
+        if (!passwordResetService.reset(request.token(), request.password(), http.getRemoteAddr())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Ce lien n'est plus valable. Demande un nouveau lien."));
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    record ForgotRequest(String email) {}
+    record ResetRequest(String token,
+            @Size(max = 128, message = "Mot de passe trop long") String password) {}
     record LoginRequest(String email, String password) {}
     record RegisterRequest(
             @Size(max = 255, message = "Nom d'utilisateur trop long") String username,

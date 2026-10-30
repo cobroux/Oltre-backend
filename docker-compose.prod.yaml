@@ -48,6 +48,12 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      APP_BASE_URL: ${APP_BASE_URL:-https://${DOMAIN}}
       # Swagger/OpenAPI public par défaut - couper l'exposition de la
       # surface d'API en production tant que rien ne l'exige réellement.
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
