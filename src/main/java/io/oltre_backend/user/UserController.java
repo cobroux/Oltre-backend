@@ -23,9 +23,11 @@ public class UserController{
 
     private final UserService userService;
     private final UserStatsService userStatsService;
+    private final UserExportService userExportService;
 
 
-    UserController(UserService userService, UserStatsService userStatsService) {
+    UserController(UserService userService, UserStatsService userStatsService, UserExportService userExportService) {
+        this.userExportService = userExportService;
         this.userService = userService;
         this.userStatsService = userStatsService;
     }
@@ -38,6 +40,13 @@ public class UserController{
     @GetMapping("/me/stats")
     public UserStatsDTO getCurrentUserStats() {
         return userStatsService.getStats(CurrentUser.id());
+    }
+
+    @GetMapping(value = "/me/export", produces = "application/json")
+    public ResponseEntity<Map<String, Object>> exportData() {
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"oltre-export.json\"")
+                .body(userExportService.export(CurrentUser.id()));
     }
 
     @PutMapping("/me")

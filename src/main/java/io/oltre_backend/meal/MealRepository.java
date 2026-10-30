@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface MealRepository extends JpaRepository<Meal, Long> {
 
     // Repas d'un jour précis
+    List<Meal> findByUser_Id(Long userId);
+
     List<Meal> findByMealDateAndUser_Id(LocalDate mealDate, Long userId);
 
     // Repas entre deux dates (pour la vue semaine)
