@@ -47,6 +47,8 @@ public class UserExportService {
         profile.put("email", user.getEmail());
         profile.put("age", user.getAge());
         profile.put("birthDate", user.getBirthDate());
+        profile.put("termsAcceptedAt", user.getTermsAcceptedAt());
+        profile.put("onboardingCompletedAt", user.getOnboardingCompletedAt());
         out.put("profile", profile);
         // Préférences seulement : jamais les clés d'abonnement push des appareils.
         out.put("notificationPreferences", Map.of(

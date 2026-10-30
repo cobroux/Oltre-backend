@@ -1,6 +1,7 @@
 package io.oltre_backend.user;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +56,12 @@ public class User {
 
     @Column(name = "push_coach_enabled", nullable = false)
     private boolean pushCoachEnabled = true;
+
+    @Column(name = "terms_accepted_at")
+    private LocalDateTime termsAcceptedAt;
+
+    @Column(name = "onboarding_completed_at")
+    private LocalDateTime onboardingCompletedAt;
 
     @OneToMany(mappedBy="user")
     private Set<Expenses> expenses  = new java.util.HashSet<>();;
@@ -143,6 +150,11 @@ public class User {
     public String getCalendarToken() { return calendarToken; }
 
     public void setCalendarToken(String calendarToken) { this.calendarToken = calendarToken; }
+
+    public LocalDateTime getTermsAcceptedAt() { return termsAcceptedAt; }
+    public void setTermsAcceptedAt(LocalDateTime v) { this.termsAcceptedAt = v; }
+    public LocalDateTime getOnboardingCompletedAt() { return onboardingCompletedAt; }
+    public void setOnboardingCompletedAt(LocalDateTime v) { this.onboardingCompletedAt = v; }
 
     public boolean isPushApptEnabled() { return pushApptEnabled; }
     public void setPushApptEnabled(boolean v) { this.pushApptEnabled = v; }

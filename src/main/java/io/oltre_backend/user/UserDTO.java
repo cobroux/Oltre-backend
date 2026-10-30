@@ -7,11 +7,17 @@ public class UserDTO{
     private String username;
     private LocalDate birthDate;
     private Integer age;
+    private boolean onboardingDone;
 
-    public UserDTO (String username, LocalDate birthDate, Integer age){
+    public UserDTO (String username, LocalDate birthDate, Integer age, boolean onboardingDone){
         this.username = username;
         this.birthDate = birthDate;
         this.age = age;
+        this.onboardingDone = onboardingDone;
+    }
+
+    public boolean isOnboardingDone() {
+        return onboardingDone;
     }
 
     public String getUsername() {
