@@ -24,6 +24,12 @@ Remplis au minimum :
   Génère la paire avec `npx web-push generate-vapid-keys` ; `VAPID_SUBJECT` = `mailto:ton@email`.
   Ne change plus la paire ensuite : les abonnements existants deviendraient invalides.
 - `GARMIN_SERVICE_URL` / `GARMIN_SERVICE_TOKEN` — si tu utilises l'intégration Garmin
+- `MAIL_HOST` / `MAIL_PORT` (587, STARTTLS) / `MAIL_USERNAME` / `MAIL_PASSWORD` / `MAIL_FROM` (ex. `Oltre <no-reply@ton-domaine>`)
+  — email « mot de passe oublié », via le SMTP de n'importe quel fournisseur (Brevo, Resend, Mailjet…).
+  `MAIL_HOST` vide = non configuré : rien n'est envoyé, un WARN est loggé. `APP_BASE_URL` = URL publique du front
+  (le lien est `<APP_BASE_URL>/reset-password?token=…`). Chez le fournisseur, configure SPF et DKIM pour ton domaine
+  d'envoi (un domaine `sslip.io` ne convient pas). Sur la VM partagée, ajoute ces variables à la main dans
+  `/opt/oltre/docker-compose.vm.yaml`.
 
 ## 3. Firewall
 

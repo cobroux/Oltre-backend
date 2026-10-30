@@ -10,7 +10,7 @@ class RegistrationClosedTest {
     @Test
     void register_whenRegistrationDisabled_returns403WithoutTouchingTheDatabase() {
         // Dépendances nulles : le refus doit arriver avant tout accès au repository.
-        AuthController controller = new AuthController(null, null, null, null, false);
+        AuthController controller = new AuthController(null, null, null, null, false, null);
 
         ResponseEntity<?> response = controller.register(new AuthController.RegisterRequest(
                 "intrus", "intrus@example.com", "motdepasse123", null, null, null));
