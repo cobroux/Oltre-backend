@@ -135,7 +135,7 @@
 <dependency>
     <groupId>org.bitbucket.b_c</groupId>
     <artifactId>jose4j</artifactId>
-    <version>0.9.6</version>
+    <version>0.9.7</version>
 </dependency>
 <!-- Même version que celle tirée par web-push (scope runtime là-bas) ; déclarée pour enregistrer le provider. -->
 <dependency>
